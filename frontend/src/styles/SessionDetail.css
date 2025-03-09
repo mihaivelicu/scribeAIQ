@@ -1,0 +1,58 @@
+/* src/styles/SessionDetail.css */
+.session-detail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
+  padding: 3rem;
+}
+
+/* Common row style */
+.session-row {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+/* Row 1: Session Title (15% height) */
+.row-title {
+  height: 14%;
+  width: 50%;
+  margin-top: 0px;
+}
+
+/* Row 2: Middle section (30% height) with two equal columns */
+.recdiv {
+  height: 18%;
+  display: flex;
+  width: 50%;
+  justify-content: flex-start;
+  align-items: start;
+  align-content: flex-start
+
+}
+
+.mid-left,
+.mid-right {
+  flex: 1;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.templatediv {
+width: 50%;
+}
+
+/* Row 3: Interpretations workspace (55% height) */
+.row-interp {
+  height: 55%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Optional: Additional styling for status monitor */
+.status-monitor {
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+}

@@ -1,0 +1,29 @@
+.template-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+}
+
+.bar-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1rem;
+    gap: 5px;
+}
+
+.template-bar {
+    width: 70%;
+}
+
+.label {
+    font-size: 0.8rem !important;
+    color: #fff !important;
+}
+
+.select-bar {
+    width: 100%;
+    height: 2.4rem;
+}

@@ -1,0 +1,79 @@
+/* src/index.css */
+
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Global Styles */
+  body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  /* Headings use Lora for a more elegant look */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Lora', serif;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Links */
+  a {
+    color: #3F6FE4; /* Primary color */
+    text-decoration: none;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Buttons */
+  button {
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+  }
+  
+  /* Material UI overrides can be added here if needed */
+  .MuiButton-containedPrimary {
+    background-color: #3F6FE4 !important;
+    color: #fff !important;
+  }
+  
+  /* Example: primary and secondary utility classes */
+  .primary-bg {
+    background-color: #3F6FE4;
+    color: #fff;
+  }
+  
+  .secondary-bg {
+    background-color: #FF6AA8;
+    color: #fff;
+  }
+  
+  /* Transparent utility classes (adjust opacity as needed) */
+  .primary-transparent {
+    background-color: rgba(63, 111, 228, 0.8);
+  }
+  
+  .secondary-transparent {
+    background-color: rgba(255, 106, 168, 0.8);
+  }
+  
+  /* Override Material UI global typography if needed */
+  .MuiTypography-root {
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  /* Add some spacing utilities */
+  .container {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* You can add more custom styles as needed for your app */
+  

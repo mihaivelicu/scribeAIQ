@@ -1,0 +1,70 @@
+.audio-recorder-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.audio-recorder-controls {
+  display: flex;
+  align-items: center;
+}
+
+.controls-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+}
+
+.rec-part, .stop-part {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.record-label, .stop-label {
+  font-family: Roboto, sans-serif;
+  color: #FF6AA8;
+  font-size: 0.8rem;
+}
+
+.record-button, .stop-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.record-button:disabled, .stop-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.blipping, .blinking {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.waveform-canvas {
+  border: 0;
+}
+
+.processing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.playback-container {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.player {
+  width: 100%;
+}
