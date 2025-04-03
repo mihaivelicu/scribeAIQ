@@ -46,6 +46,10 @@ function App() {
       const res = await axios.get(`/api/sessions/${sessionId}`);
       console.log("PARENT: Updated session data:", res.data);
       setSelectedSession(res.data);
+      // Also update the sessions array so the sidebar re-renders:
+      setSessions(prev =>
+        prev.map(s => s.session_id === sessionId ? res.data : s)
+      );
     } catch (err) {
       console.error('Error fetching single session:', err);
     }

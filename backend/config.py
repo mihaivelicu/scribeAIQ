@@ -6,3 +6,4 @@ OPENAI_API_KEY = "sk-proj-styAq8G28VPcFLEYos37dO9rcQsKu4d7gf4hwtiHfjCYWrvOp8ASI9
 
 # Where to store uploaded audio files:
 AUDIO_UPLOAD_FOLDER = "/var/www/scrib/audio_uploads"
+

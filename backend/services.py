@@ -3,8 +3,48 @@ import os
 import openai
 from models import db, Session, Template, Interpretation
 import config
+import json
 
 openai.api_key = config.OPENAI_API_KEY
+
+
+
+def generate_short_title(transcription_text):
+    """
+    Given a session transcription, use ChatGPT (GPT-4) to generate a short title.
+    The title must be no longer than 22 characters.
+    The response must be a JSON with a single key "title".
+    """
+
+    prompt = f"""You are in the backend of a modeical scribe webapp. This is the session transcription: 
+    {transcription_text}
+
+    Generate a short title for this session that is no longer than 27 characters. 
+    Words must fit inside the 27 characters, not cutting words at the end. 
+    Do not unnecessarily capitalise the first letter of every word, unless its the first word in the title, or the word has to have capital letters.
+    Output your answer strictly in JSON format with a single key "title", for example:
+    {{"title": "Your title"}}"""
+    
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a concise assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+            max_tokens=30,
+        )
+        # Extract the message content
+        message_content = response.choices[0].message['content']
+        # Parse the response as JSON
+        result = json.loads(message_content)
+        title = result.get("title", "").strip()[:22]
+        return title
+    except Exception as e:
+        print("Error generating short title:", e)
+        # Fallback to a default if needed
+        return "Untitled session"
 
 def transcribe_audio_file(mp3_path: str, session: Session):
     """

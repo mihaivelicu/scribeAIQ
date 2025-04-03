@@ -1,10 +1,15 @@
 /* src/styles/SessionDetail.css */
+
 .session-detail {
+  position: relative;         /* So .row-title can be absolutely placed */
   display: flex;
   flex-direction: column;
   height: 100%;
   background-color: #fff;
-  padding: 3rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+  padding-right: 3rem;
+  padding-left: 4.5rem;
 }
 
 /* Common row style */
@@ -14,12 +19,18 @@
   padding: 0;
 }
 
-/* Row 1: Session Title (15% height) */
+/* Row Title (ABSOLUTE) */
 .row-title {
-  height: 14%;
-  width: 50%;
-  margin-top: 0px;
+  /* Remove your old height:14%; no more conflict */
+  position: absolute;
+  top: 12rem;              /* 12rem from the top of .session-detail */
+  left: 4.5rem;            /* horizontally aligned with your left padding */
+  width: 25rem;
+  margin-top: 0;
+  z-index: 2;              /* ensure it layers above normal-flow elements */
 }
+
+
 
 /* Row 2: Middle section (30% height) with two equal columns */
 .recdiv {
@@ -28,10 +39,17 @@
   width: 50%;
   justify-content: flex-start;
   align-items: start;
-  align-content: flex-start
-
+  align-content: flex-start;
 }
 
+
+.templatediv {
+  width: 25rem;
+  position: absolute;
+  top: 15.5rem;
+}
+
+/* If you rely on mid-left/mid-right, keep them */
 .mid-left,
 .mid-right {
   flex: 1;
@@ -39,15 +57,12 @@
   box-sizing: border-box;
 }
 
-.templatediv {
-width: 50%;
-}
-
 /* Row 3: Interpretations workspace (55% height) */
 .row-interp {
-  height: 55%;
   overflow-y: auto;
   box-sizing: border-box;
+  position: absolute;
+  top: 18rem;
 }
 
 /* Optional: Additional styling for status monitor */
@@ -56,3 +71,19 @@ width: 50%;
   text-align: center;
   font-weight: bold;
 }
+
+
+.session-title-container .MuiInputBase-input {
+  padding: 10px 14px !important;
+  font-size: 1.1rem !important;
+  font-weight: bold;
+}
+
+.session-title-container .MuiInputBase-root {
+  height: 3rem !important; /* forced 2rem height */
+}
+
+.interp-text {
+  font-size: 0.75rem !important;
+}
+

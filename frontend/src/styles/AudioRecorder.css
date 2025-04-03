@@ -1,70 +1,205 @@
+/* src/styles/AudioRecorder.css */
+
+/* Outer wrapper with vertical spacing */
 .audio-recorder-wrapper {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ======================
+   ROW 1 
+   ====================== */
+.audio-recorder-row1 {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start; /* main button is flush left */
+  height: 3.5rem;
+  gap: 0.5rem;
+}
+
+.rec-col2 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: flex-start;
 }
 
-.audio-recorder-controls {
+/* The main button is in normal flow (left-aligned) */
+.main-button-slot {
+  /* no fixed width; it just sits on the left */
+}
+
+/* Pause button appears off to the left, absolutely placed */
+.pause-button-slot {
+  position: absolute;
+  top: 50%;
+  left: -50px; /* how far to the left it "hangs" */
+  transform: translateY(-50%) !important;
+}
+
+.pause-button-icon {
+  color: #f99d3b; 
+}
+
+
+/* If you want to color the text inside row1 buttons differently,
+   or show them "inactive" when done, add classes like: */
+.bubble-button.inactive {
+  color: #777 !important;       /* gray text */
+  border-color: #aaa !important;/* gray border */
+}
+
+/* Or if you want the label text specifically changed: */
+.bubble-button.inactive .bubble-label {
+  color: #aaa !important;
+}
+
+/* ======================
+   ROW 2 
+   ====================== */
+.audio-recorder-row2 {
+  /* Force a fixed height so all items align top & bottom. */
+  height: 2rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Make each child fill the row2 height. */
+.audio-recorder-row2 > * {
   display: flex;
   align-items: center;
 }
 
-.controls-container {
-  display: flex;
-  align-items: flex-end;
-  gap: 15px;
+.mic-select-container {
+  /* your existing styles, plus auto-height */
 }
 
-.rec-part, .stop-part {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+/* The mic select button */
+.mic-select-button {
+  height: 2rem;
+  padding: 4px 8px !important;
 }
 
-.record-label, .stop-label {
-  font-family: Roboto, sans-serif;
-  color: #FF6AA8;
-  font-size: 0.8rem;
+.mic-select-button.done .MuiSvgIcon-root {
+  color: gray !important;
 }
 
-.record-button, .stop-button {
-  background: none;
-  border: none;
-  cursor: pointer;
+/* Timer: 
+   We'll add a `.paused` class in JS if status==='paused'
+   to blink & turn red. */
+
+
+/* When paused => blinking red text. 
+   Add a .paused class in the JS. */
+
+.timer-display {
+  /* existing styles */
+  font-weight: 600;
+
+  align-self: flex-start;
+  justify-self: center;
+  background: #fff; /* or slightly tinted if you like */
 }
 
-.record-button:disabled, .stop-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.blipping, .blinking {
-  animation: blink 1s infinite;
+/* When paused => blink red text. Also maybe red border */
+.timer-display.paused {
+  color: red;
+  border-color: red;
+  animation: blink 1s infinite; /* you already have this */
 }
 
 @keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
   100% { opacity: 1; }
 }
 
+/* Waveform canvas fills row2 height. */
 .waveform-canvas {
-  border: 0;
+  height: 100%;
+  background: #fff;
+  border: 0px;
+  /* width is still determined by code or style, but 
+     you can do width: auto; if you want a certain aspect ratio. */
 }
 
-.processing-container {
-  display: flex;
-  flex-direction: column;
+/* ======================
+   BUBBLE BUTTON STYLING
+   (for Start/Stop/Resume/Transcribing/Complete)
+   ====================== */
+.bubble-button {
+  display: inline-flex !important;
   align-items: center;
-  gap: 10px;
+  position: relative;
+  width: 12rem !important;
+  justify-content: flex-start !important;
+  height: 3.5rem;
+
+  /* If you want a custom text color or outline, 
+     you can define it here or use .inactive above. */
 }
 
-.playback-container {
-  margin-top: 20px;
-  width: 100%;
+
+
+.record-icon {
+  color: red;
 }
 
-.player {
-  width: 100%;
+.stop-icon {
+  color: red;
+}
+
+.done-icon {
+  color: green;
+}
+
+.bubble-label {
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+/* ======================
+   TRANSCRIPTION MODAL
+   ====================== */
+.transcription-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.transcription-modal {
+  position: relative;
+  background: #fff;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80%;
+  border-radius: 6px;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.transcription-modal h3 {
+  margin-top: 0;
+}
+
+.modal-pre {
+  margin-top: 1rem;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
+
+.MuiInputLabel-root .row-title {
+  font-size: 0.4rem !important;
 }

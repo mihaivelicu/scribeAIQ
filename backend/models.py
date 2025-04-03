@@ -23,6 +23,7 @@ class Template(db.Model):
     template_text = db.Column(db.Text, nullable=False)
     times_used = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    favorite = db.Column(db.Boolean, default=False)
 
 class Interpretation(db.Model):
     __tablename__ = 'interpretations'

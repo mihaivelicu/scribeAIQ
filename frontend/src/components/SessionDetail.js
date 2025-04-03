@@ -7,11 +7,14 @@ import TemplateBar from './TemplateBar';
 import Interpretations from './Interpretations';
 import TemplateModal from './TemplateModal';
 import '../styles/SessionDetail.css';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 
 function SessionDetail({ sessionData, onSessionUpdate, fetchSessionDetails }) {
   const [interpretations, setInterpretations] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showTranscriptionModal, setShowTranscriptionModal] = useState(false);
 
   // Load interpretations whenever the session ID changes.
   useEffect(() => {
@@ -69,14 +72,6 @@ function SessionDetail({ sessionData, onSessionUpdate, fetchSessionDetails }) {
 
   return (
     <div className="session-detail">
-      <div className="session-row row-title">
-        <SessionTitle
-          sessionData={sessionData}
-          onSessionUpdate={onSessionUpdate}
-          fetchSessionDetails={fetchSessionDetails}
-        />
-      </div>
-
       <div className="recdiv">
         <AudioRecorder
           sessionData={sessionData}
@@ -84,11 +79,19 @@ function SessionDetail({ sessionData, onSessionUpdate, fetchSessionDetails }) {
         />
       </div>
 
+      <div className="session-row row-title">
+        <SessionTitle
+          sessionData={sessionData}
+          onSessionUpdate={onSessionUpdate}
+          fetchSessionDetails={fetchSessionDetails}
+          onShowTranscript={() => setShowTranscriptionModal(true)}
+        />
+      </div>
+
       <div className="templatediv">
         <TemplateBar
           sessionData={sessionData}
           onGenerateInterpretation={handleGenerateInterpretation}
-          onOpenTemplateModal={() => setShowTemplateModal(true)}
         />
       </div>
 
@@ -96,14 +99,23 @@ function SessionDetail({ sessionData, onSessionUpdate, fetchSessionDetails }) {
         <Interpretations interpretations={interpretations} templates={templates} />
       </div>
 
-      {showTemplateModal && (
-        <TemplateModal
-          onClose={() => setShowTemplateModal(false)}
-          onTemplateCreated={() => {
-            // Optionally, refresh your templates or notify TemplateBar if needed.
-            setShowTemplateModal(false);
-          }}
-        />
+      {/* Transcription Modal */}
+      {showTranscriptionModal && (
+        <div
+          className="transcription-modal-overlay"
+          onClick={() => setShowTranscriptionModal(false)}
+        >
+          <div
+            className="transcription-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <IconButton className="close-button" onClick={() => setShowTranscriptionModal(false)}>
+              <CloseIcon />
+            </IconButton>
+            <h3>Transcription</h3>
+            <pre className="modal-pre">{sessionData?.transcription_text}</pre>
+          </div>
+        </div>
       )}
     </div>
   );

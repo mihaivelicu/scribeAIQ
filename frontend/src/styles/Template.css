@@ -1,17 +1,19 @@
+/* CSS Variables for easy adjustments */
+
+:root {
+  --template-font-size: 0.8rem;
+  --template-icon-size: 1rem;
+  --times-used-badge-bg: #eee;
+  --times-used-badge-color: #333;
+  --times-used-badge-font-size: 0.5rem; /* Reduced font size */
+  --times-used-badge-padding: 0.05rem 0.3rem; /* Reduced padding */
+  --times-used-badge-border-radius: 4px;
+}
+
 .template-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-
-}
-
-.bar-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 1rem;
-    gap: 5px;
 }
 
 .template-bar {
@@ -25,5 +27,40 @@
 
 .select-bar {
     width: 100%;
-    height: 2.4rem;
+    height: 2rem;
+}
+
+/* Outer container that holds everything in a single row. */
+.template-row-outer {
+    width: 25rem;
+    display: flex;
+    flex-direction: column; 
+}
+
+/* Inner row for the Select and the Button side by side. */
+.template-row-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+}
+
+/* The select bar fills the row minus the button width. */
+.select-bar {
+    flex: 1;
+}
+
+.MuiSelect-select {
+    font-size: var(--template-font-size) !important;
+}
+
+
+.times-used-badge {
+  background-color: var(--times-used-badge-bg);
+  color: var(--times-used-badge-color);
+  font-size: var(--times-used-badge-font-size);
+  padding: var(--times-used-badge-padding);
+  border-radius: var(--times-used-badge-border-radius);
+  /* Adjust margin so it aligns nicely */
+  margin-right: 0.3rem;
 }

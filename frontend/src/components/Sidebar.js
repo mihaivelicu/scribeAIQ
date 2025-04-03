@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import '../styles/Sidebar.css';
 import axios from 'axios';
 import { deleteSession } from '../api';
+import SessionCard from './SessionCard';
 
 function Sidebar({
   sessions,
@@ -123,47 +124,17 @@ function Sidebar({
       </div>
 
       <div className="session-list">
-        {sessions.map((s) => {
-          const isCurrentlyOpen = s.session_id === selectedSessionId;
-
-          return (
-            <Card
-              key={s.session_id}
-              className={`session-card ${selectionMode ? 'selection-mode' : ''} ${
-                isCurrentlyOpen ? 'currently-open' : ''
-              }`}
-              onClick={() => {
-                if (!selectionMode) {
-                  onSessionSelect(s);
-                }
-              }}
-              onMouseEnter={(e) => e.currentTarget.classList.add('hovered')}
-              onMouseLeave={(e) => e.currentTarget.classList.remove('hovered')}
-            >
-              <CardContent className="cardcontent-sesh">
-                <div className="session-checkbox">
-                  <Checkbox
-                    checked={selectedIds.includes(s.session_id)}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleCheckboxChange(s.session_id);
-                    }}
-                  />
-                </div>
-                <div className="card-content-inner">
-                  <div className="sesh-container">
-                    <span className="session-name">
-                      {s.session_title || `Session #${s.session_id}`}
-                    </span>
-                    <span className="session-date">
-                      {new Date(s.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {sessions.map((s) => (
+          <SessionCard
+            key={s.session_id}
+            session={s}
+            isSelected={s.session_id === selectedSessionId}
+            selectionMode={selectionMode}
+            isChecked={selectedIds.includes(s.session_id)}
+            onSelect={onSessionSelect} // same function as before
+            onCheckboxChange={handleCheckboxChange}
+          />
+        ))}
       </div>
     </div>
   );

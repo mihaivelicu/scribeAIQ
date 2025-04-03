@@ -5,6 +5,9 @@ from flask import Blueprint, request, jsonify
 from models import db, Session, Template, Interpretation
 import config
 from services import transcribe_audio_file, generate_interpretation
+import uuid
+import ffmpeg  # optional if you have a python-ffmpeg binding, or just call subprocess
+import shutil
 
 
 routes_blueprint = Blueprint("routes_blueprint", __name__)
@@ -150,6 +153,15 @@ def upload_audio(session_id):
     except Exception as e:
         print("Error during transcription:", e)
         return jsonify({"error": f"Error during transcription: {str(e)}"}), 500
+    
+    # NEW: If the session title is still "Untitled session" and transcription is available,
+    # generate a short title via ChatGPT.
+    if s.session_title.strip().lower() == "untitled session" and s.transcription_text:
+        from services import generate_short_title  # Ensure this import is at the top or here
+        new_title = generate_short_title(s.transcription_text)
+        print(f"Auto-generated title: {new_title}")
+        s.session_title = new_title
+        db.session.commit()
 
     try:
         s.audio_file_path = "/audio/" + os.path.basename(mp3_path)
@@ -188,6 +200,35 @@ def create_template():
         "created_at": new_tmpl.created_at.isoformat()
     }), 201
 
+@routes_blueprint.route("/sessions/<int:session_id>/audio", methods=["DELETE"])
+def delete_audio_file(session_id):
+    """
+    Deletes the audio file from the server for a given session
+    and sets session.audio_file_path = None.
+    """
+    s = Session.query.get(session_id)
+    if not s:
+        return jsonify({"error": "Session not found"}), 404
+    
+    if not s.audio_file_path:
+        return jsonify({"error": "No audio file set in this session"}), 400
+
+    # Full path on disk
+    file_basename = os.path.basename(s.audio_file_path)  # e.g. "session_123_anything.mp3"
+    file_path = os.path.join(config.AUDIO_UPLOAD_FOLDER, file_basename)
+
+    # Delete from disk if it exists
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            return jsonify({"error": f"Error deleting file: {str(e)}"}), 500
+
+    # Update the DB record
+    s.audio_file_path = None
+    db.session.commit()
+    return jsonify({"message": "Audio file deleted"}), 200
+
 @routes_blueprint.route("/templates", methods=["GET"])
 def list_templates():
     """List all templates."""
@@ -199,7 +240,8 @@ def list_templates():
             "template_name": t.template_name,
             "template_text": t.template_text,
             "times_used": t.times_used,
-            "created_at": t.created_at.isoformat()
+            "created_at": t.created_at.isoformat(),
+            "favorite": t.favorite  # Added favorite field here
         })
     return jsonify(results), 200
 
@@ -251,3 +293,184 @@ def list_interpretations():
             "created_at": i.created_at.isoformat()
         })
     return jsonify(results), 200
+
+# routes.py (add these imports at the top if needed)
+
+@routes_blueprint.route("/sessions/<int:session_id>/chunks", methods=["POST"])
+def upload_chunk(session_id):
+    """
+    Upload a partial MP3 chunk for a given session.
+    We'll store it in a temp folder, e.g. /audio_uploads/temp_chunks/session_123_<unique>.mp3
+    """
+    s = Session.query.get(session_id)
+    if not s:
+        return jsonify({"error": "Session not found"}), 404
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "Empty filename"}), 400
+
+    # Generate a unique chunk filename
+    chunk_filename = f"chunk_{uuid.uuid4()}.mp3"
+    temp_dir = os.path.join(config.AUDIO_UPLOAD_FOLDER, "temp_chunks", f"session_{session_id}")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    saved_path = os.path.join(temp_dir, chunk_filename)
+    try:
+        file.save(saved_path)
+    except Exception as e:
+        return jsonify({"error": f"Error saving chunk: {str(e)}"}), 500
+
+    return jsonify({
+        "message": "Partial chunk uploaded",
+        "chunk_filename": chunk_filename
+    }), 200
+
+
+@routes_blueprint.route("/sessions/<int:session_id>/merge-chunks", methods=["POST"])
+def merge_chunks(session_id):
+    """
+    Takes all partial chunk files from /temp_chunks/session_<id>/,
+    merges them with ffmpeg in correct chronological order,
+    transcribes the final result, updates session audio_file_path.
+    """
+    s = Session.query.get(session_id)
+    if not s:
+        return jsonify({"error": "Session not found"}), 404
+
+    temp_dir = os.path.join(config.AUDIO_UPLOAD_FOLDER, "temp_chunks", f"session_{session_id}")
+    if not os.path.exists(temp_dir):
+        return jsonify({"error": "No partial chunks found"}), 400
+
+    # Gather all chunk MP3s
+    chunks = [f for f in os.listdir(temp_dir) if f.endswith(".mp3")]
+    if not chunks:
+        return jsonify({"error": "No chunk files found"}), 400
+
+    # 1) Sort by file creation time so we get the chronological order
+    chunks.sort(key=lambda fname: os.path.getctime(os.path.join(temp_dir, fname)))
+
+    # 2) If there's only one chunk, no real merge needed; just rename
+    if len(chunks) == 1:
+        single_chunk_path = os.path.join(temp_dir, chunks[0])
+        final_mp3_path = os.path.join(config.AUDIO_UPLOAD_FOLDER, f"session_{session_id}_merged.mp3")
+        try:
+            shutil.move(single_chunk_path, final_mp3_path)
+        except Exception as e:
+            return jsonify({"error": f"Error moving chunk: {str(e)}"}), 500
+    else:
+        # 3) For multiple chunks, create a list.txt and run ffmpeg concat
+        list_path = os.path.join(temp_dir, "list.txt")
+        with open(list_path, "w") as f:
+            for c in chunks:
+                f.write(f"file '{os.path.join(temp_dir, c)}'\n")
+
+        final_mp3_path = os.path.join(config.AUDIO_UPLOAD_FOLDER, f"session_{session_id}_merged.mp3")
+
+        merge_cmd = [
+            "ffmpeg", "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", list_path,
+            "-c", "copy",
+            final_mp3_path
+        ]
+        try:
+            subprocess.run(merge_cmd, check=True)
+        except Exception as e:
+            return jsonify({"error": f"Error merging chunks: {str(e)}"}), 500
+
+    # 4) Transcribe the merged MP3
+    try:
+        transcribe_audio_file(final_mp3_path, s)
+    except Exception as e:
+        return jsonify({"error": f"Error during transcription: {str(e)}"}), 500
+
+    # NEW: Auto-update title if still default and transcription is available.
+    if s.session_title.strip().lower() == "untitled session" and s.transcription_text:
+        from services import generate_short_title  # Import if not already imported
+        new_title = generate_short_title(s.transcription_text)
+        print(f"Auto-generated title: {new_title}")
+        s.session_title = new_title
+        db.session.commit()
+
+    # 5) Update session
+    s.audio_file_path = "/audio/" + os.path.basename(final_mp3_path)
+    db.session.commit()
+
+    # 6) Optionally remove temp dir
+    try:
+        shutil.rmtree(temp_dir)
+    except Exception as e:
+        print(f"Warning: failed to remove temp dir {temp_dir}: {e}")
+
+    return jsonify({"message": "Chunks merged & transcribed in correct order"}), 200
+
+@routes_blueprint.route("/templates/<int:template_id>", methods=["PUT"])
+def update_template(template_id):
+    """Update an existing template by ID."""
+    from models import Template, db
+    t = Template.query.get(template_id)
+    if not t:
+        return jsonify({"error": "Template not found"}), 404
+
+    data = request.get_json() or {}
+    new_name = data.get("template_name")
+    new_text = data.get("template_text")
+
+    if not new_name or not new_text:
+        return jsonify({"error": "template_name or template_text missing"}), 400
+
+    t.template_name = new_name
+    t.template_text = new_text
+    db.session.commit()
+
+    return jsonify({
+        "template_id": t.template_id,
+        "template_name": t.template_name,
+        "template_text": t.template_text,
+        "created_at": t.created_at.isoformat()
+    }), 200
+
+
+@routes_blueprint.route("/templates/<int:template_id>", methods=["DELETE"])
+def delete_template(template_id):
+    """Delete an existing template by ID."""
+    from models import Template, db
+    t = Template.query.get(template_id)
+    if not t:
+        return jsonify({"error": "Template not found"}), 404
+
+    try:
+        db.session.delete(t)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()  # rollback the session on error
+        # Check if it's a foreign key violation (you can further inspect 'e' if needed)
+        return jsonify({"error": "Template cannot be deleted because it is in use."}), 400
+
+    return jsonify({"message": "Template deleted"}), 200
+
+@routes_blueprint.route("/templates/<int:template_id>/favorite", methods=["PUT"])
+def toggle_favorite(template_id):
+    from models import Template, db
+    t = Template.query.get(template_id)
+    if not t:
+        return jsonify({"error": "Template not found"}), 404
+
+    data = request.get_json()
+    if data is None or "favorite" not in data:
+        return jsonify({"error": "Missing 'favorite' key in request"}), 400
+
+    new_favorite = data["favorite"]
+    t.favorite = new_favorite
+    db.session.commit()
+
+    return jsonify({
+        "template_id": t.template_id,
+        "favorite": t.favorite
+    }), 200
+

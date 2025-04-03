@@ -1,29 +1,25 @@
 // src/components/SessionTitle.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { TextField } from '@mui/material';
+import { TextField, InputAdornment, Button } from '@mui/material';
+import '../styles/Title.css';
 
-function SessionTitle({ sessionData, onSessionUpdate, fetchSessionDetails }) {
-  // Initialize local title
+function SessionTitle({ sessionData, onSessionUpdate, fetchSessionDetails, onShowTranscript }) {
   const [title, setTitle] = useState(sessionData.session_title || "Untitled session");
 
-  // Update local title when sessionData changes
+  // Update local title state if sessionData changes
   useEffect(() => {
     setTitle(sessionData.session_title || "Untitled session");
   }, [sessionData]);
 
-  // Letter-by-letter sync
   const handleTitleChange = (e) => {
     const newVal = e.target.value;
     setTitle(newVal);
-
-    // Immediately notify parent so the sidebar sees the updated title
     if (onSessionUpdate) {
       onSessionUpdate({ ...sessionData, session_title: newVal });
     }
   };
 
-  // On blur, finalize the title in the DB and merge the updated title with the existing sessionData
   const handleTitleBlur = async () => {
     let newTitle = title.trim();
     if (!newTitle) {
@@ -31,20 +27,15 @@ function SessionTitle({ sessionData, onSessionUpdate, fetchSessionDetails }) {
       setTitle(newTitle);
     }
     try {
-      // Update the title on the server
       const res = await axios.put(`/api/sessions/${sessionData.session_id}`, {
         session_title: newTitle
       });
       const updated = res.data;
-      // Merge the returned updated title with the existing sessionData to preserve other fields
       const mergedSession = { ...sessionData, session_title: updated.session_title };
       setTitle(mergedSession.session_title);
-
-      // Notify parent (and thus the sidebar) of the final change
       if (onSessionUpdate) {
         onSessionUpdate(mergedSession);
       }
-      // Optionally re-fetch full session details if needed
       if (fetchSessionDetails) {
         fetchSessionDetails(mergedSession.session_id);
       }
@@ -66,11 +57,19 @@ function SessionTitle({ sessionData, onSessionUpdate, fetchSessionDetails }) {
         }}
         fullWidth
         InputProps={{
-          style: {
-            fontFamily: 'Lora, serif',
-            fontSize: '1.3rem',
-            textAlign: 'center'
-          }
+          // Only show the SEE TRANSCRIPT button if transcription text exists
+          endAdornment: (sessionData && sessionData.transcription_text) ? (
+            <InputAdornment position="end">
+              <Button 
+                variant="text" 
+                onClick={onShowTranscript}
+                className="show-transcription-button"
+                style={{ padding: 0, minWidth: 'auto' }}
+              >
+                SEE TRANSCRIPT
+              </Button>
+            </InputAdornment>
+          ) : null,
         }}
       />
     </div>
