@@ -22,9 +22,9 @@ def generate_short_title(transcription_text):
 
     Generate a short title for this session that is no longer than 20 characters. 
     Words must fit inside the 20 characters, not cutting words at the end. 
-    Do not unnecessarily capitalise the first letter of every word, unless its the first word in the title, or the word has to have capital letters.
+    Do not unnecessarily capitalise the first letter of every word, unless its the first word in the whole title, or the word has to have capital letters.
     Output your answer strictly in JSON format with a single key "title", for example:
-    {{"title": "Your title"}}. Return only pure JSON, no other text, no other symbols. It needs to be correctly read as json by a python script."""
+    {{"title": "Your title"}}. VERY IMPORTANT: Return only pure JSON, no other text, no other symbols, nothing else other than pure json. Your returned reply needs to be correctly read as json by a python script and it must contain absolutely nothing else other than the json requested."""
     print('tra---', transcription_text)
     try:
         response = openai.ChatCompletion.create(

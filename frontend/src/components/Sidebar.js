@@ -1,4 +1,4 @@
-// ─── src/components/Sidebar.js ───────────────────────────────────
+// src/components/Sidebar.js
 import React, { useState, useEffect } from 'react';
 import {
   Button,
@@ -8,127 +8,157 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import DeleteIcon      from '@mui/icons-material/Delete';
+import DeleteIcon from '@mui/icons-material/Delete';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import axios           from 'axios';
+import axios from 'axios';
 
 import '../styles/Sidebar.css';
 import { deleteSession } from '../api';
-import SessionCard      from './SessionCard';
-import AudioRecorder    from './AudioRecorder';
+import SessionCard from './SessionCard';
+import AudioRecorder from './AudioRecorder';
 
 function Sidebar({
   sessions,
   selectedSessionId,
   onSessionSelect,
-  onSessionsChange,
+  onSessionsChange,       // reserved
   fetchAllSessions,
   onSessionUpdate,
   selectedSession,
   fetchSessionDetails,
-  onCreateSession
+  onCreateSession,
+  isRecording,            // ← NEW
+  onRecordingChange,      // ← NEW
 }) {
+  /* ------------------------------------------------------------ */
+  /*  Local state                                                 */
+  /* ------------------------------------------------------------ */
   const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds,  setSelectedIds]    = useState([]);
-  const [confirmOpen,  setConfirmOpen]    = useState(false); // NEW
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // Decide if recorder should replace the Create-session button
+  /* ------------------------------------------------------------ */
+  /*  Recorder replacement logic                                  */
+  /* ------------------------------------------------------------ */
   const showRecorder =
-  selectedSession &&
-  !selectedSession.audio_file_path &&
-  !selectedSession.transcription_text;
+    selectedSession &&
+    !selectedSession.audio_file_path &&
+    !selectedSession.transcription_text;
 
-  /* ───────────────────────── helpers ───────────────────────── */
   const refreshList = async () => await fetchAllSessions();
 
-  /* auto-exit selection mode if array becomes empty */
+  /* auto-exit selection mode */
   useEffect(() => {
     if (selectedIds.length === 0) setSelectionMode(false);
   }, [selectedIds]);
 
-  /* ─── CREATE SESSION (unchanged) ─── */
+  /* ------------------------------------------------------------ */
+  /*  Create-session handler                                      */
+  /* ------------------------------------------------------------ */
   const handleCreateSession = async () => {
+    if (isRecording) return; // LOCK
     try {
-      const res   = await axios.post('/api/sessions', { session_title:'Untitled session' });
-      const list  = await refreshList();
-      const found = list.find(s => s.session_id === res.data.session_id);
+      const res = await axios.post('/api/sessions', {
+        session_title: 'Untitled session',
+      });
+      const list = await refreshList();
+      const found = list.find((s) => s.session_id === res.data.session_id);
       onSessionSelect(found || res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  /* ─── CHECKBOX TOGGLE ─── */
-  const handleCheckboxChange = (sid) => {
-    if (!selectionMode) { setSelectionMode(true); setSelectedIds([sid]); }
-    else {
-      setSelectedIds(prev =>
-        prev.includes(sid) ? prev.filter(id => id!==sid)
-                           : [...prev, sid]);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  /* ─── SELECT / UNSELECT ALL ─── */
-  const allSelected          = selectedIds.length === sessions.length && sessions.length>0;
+  /* ------------------------------------------------------------ */
+  /*  Checkbox toggle                                             */
+  /* ------------------------------------------------------------ */
+  const handleCheckboxChange = (sid) => {
+    if (!selectionMode) {
+      setSelectionMode(true);
+      setSelectedIds([sid]);
+    } else {
+      setSelectedIds((prev) =>
+        prev.includes(sid) ? prev.filter((id) => id !== sid) : [...prev, sid]
+      );
+    }
+  };
+
+  /* ------------------------------------------------------------ */
+  /*  Select-all toggle                                           */
+  /* ------------------------------------------------------------ */
+  const allSelected =
+    selectedIds.length === sessions.length && sessions.length > 0;
   const selectAllButtonLabel = allSelected ? 'Unselect All' : 'Select All';
   const handleSelectAllToggle = () => {
     if (allSelected) setSelectedIds([]);
-    else setSelectedIds(sessions.map(s => s.session_id));
+    else setSelectedIds(sessions.map((s) => s.session_id));
   };
 
-  /* ─── DELETE CONFIRMATION ─── */
-  const openConfirm  = () => setConfirmOpen(true);
-  const closeConfirm = () => setConfirmOpen(false);
-
+  /* ------------------------------------------------------------ */
+  /*  Delete confirmation                                         */
+  /* ------------------------------------------------------------ */
   const handleConfirmDelete = async () => {
     try {
       for (const id of selectedIds) await deleteSession(id);
-      setSelectedIds([]);                       // reset UI
-      await refreshList();                      // refresh sidebar
-      closeConfirm();
-    } catch (err) { console.error('Error deleting sessions:', err); }
+      setSelectedIds([]);
+      await refreshList();
+      setConfirmOpen(false);
+    } catch (err) {
+      console.error('Error deleting sessions:', err);
+    }
   };
 
-  /* ───────────────────────── render ───────────────────────── */
+  /* ------------------------------------------------------------ */
+  /*  Session select (blocked while recording)                    */
+  /* ------------------------------------------------------------ */
+  const handleSessionSelect = (s) => {
+    if (isRecording) return;
+    onSessionSelect(s);
+  };
+
+  /* ------------------------------------------------------------ */
+  /*  Render                                                      */
+  /* ------------------------------------------------------------ */
   return (
     <div className="sidebar">
-
-    
-
       {/* ─── SELECTION TOOLBAR ─── */}
       <div className={`selection-toolbar ${selectionMode ? '' : 'hidden'}`}>
-        <Button variant="text"
-                className="select-button"
-                onClick={handleSelectAllToggle}>
+        <Button
+          variant="text"
+          className="select-button"
+          onClick={handleSelectAllToggle}
+        >
           {selectAllButtonLabel}
         </Button>
-        <IconButton className='trash'onClick={openConfirm}>
+        <IconButton className="trash" onClick={() => setConfirmOpen(true)}>
           <DeleteIcon />
         </IconButton>
       </div>
 
       {/* ─── SCROLLABLE LIST ─── */}
       <div className="session-list">
-        {sessions.map(s => (
+        {sessions.map((s) => (
           <SessionCard
             key={s.session_id}
             session={s}
             isSelected={s.session_id === selectedSessionId}
             selectionMode={selectionMode}
             isChecked={selectedIds.includes(s.session_id)}
-            onSelect={onSessionSelect}
+            onSelect={handleSessionSelect}
             onCheckboxChange={handleCheckboxChange}
             onSessionUpdate={onSessionUpdate}
+            disableInteraction={isRecording}
           />
         ))}
       </div>
 
-
-
-      {/* ─── BOTTOM CREATE BAR ─── */}
+      {/* ─── BOTTOM BAR ─── */}
       <div className="top-action-wrapper">
         {showRecorder ? (
           <AudioRecorder
             sessionData={selectedSession}
             fetchSessionDetails={fetchSessionDetails}
+            onRecordingChange={onRecordingChange}
           />
         ) : (
           <div className="create-btn-wrapper">
@@ -136,7 +166,8 @@ function Sidebar({
               className="create-session-btn"
               variant="contained"
               sx={{ textTransform: 'none' }}
-              onClick={onCreateSession}
+              onClick={handleCreateSession}
+              disabled={isRecording}
             >
               <span className="create-button-text">Create session</span>
             </Button>
@@ -144,17 +175,18 @@ function Sidebar({
         )}
       </div>
 
-      {/* ─── CONFIRM DELETE MODAL ─── */}
-      <Dialog open={confirmOpen} onClose={closeConfirm}>
-        <DialogTitle sx={{ display:'flex', alignItems:'center', gap:1 }}>
+      {/* ─── CONFIRM DELETE ─── */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <WarningAmberIcon color="warning" />
           Are you sure you want to delete?
         </DialogTitle>
         <DialogContent>
-          {selectedIds.length} session{selectedIds.length!==1 && 's'} will be removed permanently.
+          {selectedIds.length} session
+          {selectedIds.length !== 1 && 's'} will be removed permanently.
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={closeConfirm}>
+          <Button variant="outlined" onClick={() => setConfirmOpen(false)}>
             No, cancel
           </Button>
           <Button variant="contained" onClick={handleConfirmDelete}>
@@ -162,7 +194,6 @@ function Sidebar({
           </Button>
         </DialogActions>
       </Dialog>
-
     </div>
   );
 }
