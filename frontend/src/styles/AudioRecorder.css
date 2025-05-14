@@ -1,11 +1,5 @@
 /* src/styles/AudioRecorder.css */
 
-/* Outer wrapper with vertical spacing */
-.audio-recorder-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
 
 /* ======================
    ROW 1 
@@ -72,15 +66,7 @@
   align-items: center;
 }
 
-.mic-select-container {
-  /* your existing styles, plus auto-height */
-}
 
-/* The mic select button */
-.mic-select-button {
-  height: 2rem;
-  padding: 4px 8px !important;
-}
 
 .mic-select-button.done .MuiSvgIcon-root {
   color: gray !important;
@@ -94,14 +80,6 @@
 /* When paused => blinking red text. 
    Add a .paused class in the JS. */
 
-.timer-display {
-  /* existing styles */
-  font-weight: 600;
-
-  align-self: flex-start;
-  justify-self: center;
-  background: #fff; /* or slightly tinted if you like */
-}
 
 /* When paused => blink red text. Also maybe red border */
 .timer-display.paused {
@@ -116,14 +94,7 @@
   100% { opacity: 1; }
 }
 
-/* Waveform canvas fills row2 height. */
-.waveform-canvas {
-  height: 100%;
-  background: #fff;
-  border: 0px;
-  /* width is still determined by code or style, but 
-     you can do width: auto; if you want a certain aspect ratio. */
-}
+
 
 /* ======================
    BUBBLE BUTTON STYLING
@@ -133,22 +104,61 @@
   display: inline-flex !important;
   align-items: center;
   position: relative;
-  width: 12rem !important;
   justify-content: flex-start !important;
-  height: 3.5rem;
+  height: 100%;
+  width:100%; 
+  padding: 0 20px !important;
 
-  /* If you want a custom text color or outline, 
-     you can define it here or use .inactive above. */
+  cursor:pointer;
+
+  display:flex;
+  align-items:center;
+  gap:6px;
+
+
+  color:#fff !important;
+  font-weight:700;
+  font-weight:700 !important;  
+  font-size:16px !important;
+  line-height:28px !important;
+
 }
 
+.stopsave-button {
+  text-transform: none !important;
+  background-color: #45eb4b !important;
+  border-radius: 0px !important;
+}
+.stopsave-button:hover {
+  background-color: #36f53d !important;
+}
 
+.start-button {
+  text-transform: none !important;
+  background-color: #fe6167  !important;
+  border-radius: 0px !important;
+}
+.start-button:hover {
+  background-color: #fc4b51 !important;
+}
+
+.stop-button {
+  text-transform: none !important;
+  background-color: #45eb4b !important;
+  border-radius: 0px !important;
+}
+.stop-button:hover {
+  background-color: #36f53d !important;
+}
 
 .record-icon {
-  color: red;
+  color: #fff;
+  font-size: 14px !important;
 }
 
 .stop-icon {
-  color: red;
+  color: #fff;
+  font-size: 14px !important;
 }
 
 .done-icon {
@@ -156,7 +166,6 @@
 }
 
 .bubble-label {
-  border-radius: 8px;
   padding: 4px 8px;
 }
 
@@ -202,4 +211,121 @@
 
 .MuiInputLabel-root .row-title {
   font-size: 0.4rem !important;
+}
+
+/* =============================================================== */
+/*  CARD LAYOUT – matches Figma screenshot                         */
+/* =============================================================== */
+
+.audio-recorder-card{
+  /* two rows, three columns (35% 35% 30%) */
+  display:grid;
+  grid-template-columns:37% 37% 26%;
+  grid-template-rows:60px 20px;        /* exact heights in Figma */
+  width:100%;
+  width: 306px !important; /* fixed width */
+  border-radius:4px;
+  overflow:hidden;             
+  background-color:var(--color-border-card) !important;
+  font-family:var(--ff-base);
+}
+
+/* ----------  ROW-1  ---------- */
+.main-action{
+  grid-column:1 / 3;
+  display:flex;
+  align-items:center;                /* text inset like Figma */
+}
+
+
+/* right-side strip spanning both rows */
+.timer-waveform{
+  grid-column:3 / 4;
+  grid-row:1 / 3;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  background:#E43D41;                /* darker red strip */
+}
+
+.timer-display{
+  font-size:12px !important;
+  font-weight:700 !important;
+  color: #fff !important;
+  line-height: 16px !important;
+  padding-top: 5px !important;
+}
+.timer-display.paused{ color:#000000; animation:blink 1s infinite; }
+
+/* waveform */
+.waveform-canvas{
+  width: 100%;
+  height: 30px;
+  background: transparent;  /* ensure no fill behind your dots */
+  border: none;
+  color: #fff !important;
+}
+
+/* mic selector lives here */
+.mic-select-button{
+  display: flex;
+  align-self: flex-end !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 2px 5px !important;
+  border-radius: 0 !important;
+  color:#fff !important;
+}
+.mic-select-button.Mui-disabled{ opacity:.35; }
+
+/* ----------  ROW-2  ---------- */
+.pause-cell,
+.cancel-cell,
+.mic-cell{ display:flex; align-items:center; justify-content:center; }
+
+.mic-icon {
+  font-size: 1rem !important;
+}
+
+.secondary-btn{
+  width:100%;
+  height: 100%;
+  border-radius:0 !important;                    /* flush edges */
+  font-weight:600;
+  text-transform:none !important;
+  font-size:8px;
+  font-weight: 700!important;
+}
+
+/* colours */
+.pause-cell .secondary-btn{
+  background:#F99D3B!important;       /* yellow-orange */
+  color:#262626!important;
+  font-size: 10px !important;
+}
+.cancel-cell .secondary-btn{
+  background:#E64C50!important;       /* mid red */
+  color:#fff!important;
+  font-size: 10px !important;
+}
+
+
+/* Buttons ------------------------------------------------------- */
+
+
+
+/* Timer & waveform --------------------------------------------- */
+
+.timer-display.paused{ color:#ffe8e8; animation:blink 1s infinite; }
+
+
+
+
+.bubble-button{
+  width:100%;
+
+  justify-content:flex-start;
+  gap:8px;
+  text-transform:none !important;
 }

@@ -1,97 +1,106 @@
-// src/components/TemplateModal.js
+// ─── src/components/TemplateModal.js ───────────────────────────
 import React, { useEffect, useState } from 'react';
-import { Paper, TextField, Button, Typography } from '@mui/material';
+import {
+  Paper, TextField, Button, Typography
+} from '@mui/material';
 import { createTemplate, updateTemplate } from '../api';
 
 function TemplateModal({ onClose, onTemplateSaved, editingTemplate }) {
   const [templateName, setTemplateName] = useState('');
   const [templateText, setTemplateText] = useState('');
-  const [initial, setInitial] = useState({ name: '', text: '' });
+  const [initial,      setInitial]      = useState({ name:'', text:'' });
 
+  /* preload when editing */
   useEffect(() => {
     if (editingTemplate) {
       setTemplateName(editingTemplate.template_name);
       setTemplateText(editingTemplate.template_text);
       setInitial({
         name: editingTemplate.template_name,
-        text: editingTemplate.template_text,
+        text: editingTemplate.template_text
       });
     } else {
-      setTemplateName('');
-      setTemplateText('');
-      setInitial({ name: '', text: '' });
+      setTemplateName(''); setTemplateText('');
+      setInitial({ name:'', text:'' });
     }
   }, [editingTemplate]);
 
-  const hasChanges =
-    templateName !== initial.name ||
-    templateText !== initial.text;
-
-  const isCreateMode = !editingTemplate; // true if creating
+  const hasChanges   = templateName!==initial.name || templateText!==initial.text;
+  const isCreateMode = !editingTemplate;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (isCreateMode) {
+      if (isCreateMode)
         await createTemplate(templateName, templateText);
-      } else {
+      else
         await updateTemplate(editingTemplate.template_id, templateName, templateText);
-      }
-      onTemplateSaved();  // refresh parent, close modal, etc.
+      onTemplateSaved();
     } catch (err) {
-      console.error('Error saving template:', err);
-      alert('Error saving template. Check console for details.');
+      console.error(err);
+      alert('Error saving template.');
     }
+  };
+
+  /* Common styling snippet for both TextFields */
+  const fieldSX = {
+    '& .MuiOutlinedInput-root': { borderRadius: 4 },
+    '& .MuiInputLabel-root':    { fontSize: 14 },
+    '& .MuiInputBase-input':    { fontSize: 14 }
   };
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 10000  // ensure this modal is on top
+      position:'fixed', inset:0,
+      background:'rgba(0,0,0,.5)',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      zIndex:10000
     }}>
-      <Paper style={{ padding: '1rem', width: '90%', maxWidth: '500px' }}>
-        <Typography variant="h6" gutterBottom>
+      <Paper className="tpl-modal-paper" sx={{ p:'0 24px', width:'90%', maxWidth:500 }}>
+        <Typography className="tpl-mod-head">
           {isCreateMode ? 'Create Template' : 'Edit Template'}
         </Typography>
+
         <form onSubmit={handleSubmit}>
+
+          {/* Template Name */}
           <TextField
             label="Template Name"
-            variant="outlined"
+            className='tpl-label'
             value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
+            onChange={e=>setTemplateName(e.target.value)}
             fullWidth
-            style={{ marginBottom: '1rem' }}
-          />
-          <TextField
-            label="Template Text"
             variant="outlined"
-            value={templateText}
-            onChange={(e) => setTemplateText(e.target.value)}
-            fullWidth
-            multiline
-            rows={4}
-            style={{ marginBottom: '1rem' }}
+            sx={{ mt:3, ...fieldSX }}
           />
 
-          <div style={{ textAlign: 'right' }}>
-            <Button onClick={onClose} style={{ marginRight: '1rem' }}>
+          {/* Template Text – auto-grows up to 12 rows */}
+          <TextField
+            label="Template Text"
+            className='tpl-label'
+            value={templateText}
+            onChange={e=>setTemplateText(e.target.value)}
+            fullWidth
+            multiline
+            minRows={4}
+            maxRows={12}
+            variant="outlined"
+            sx={{ mt:3, ...fieldSX }}
+          />
+
+          {/* Buttons */}
+          <div className="tpl-mod-btns" style={{ textAlign:'right' }}>
+            <Button className="tpl-mod-btn" onClick={onClose} sx={{ mr:2 }}>
               Cancel
             </Button>
             <Button
               type="submit"
               variant="contained"
+              className="tpl-mod-btn tpl-save"
               disabled={!hasChanges || !templateName.trim() || !templateText.trim()}
               sx={{
-                backgroundColor: '#22C197',
-                color: 'white',
-                ':hover': {
-                  backgroundColor: '#1b9f88'
-                }
+                background:'#22C197',
+                ':hover':{ background:'#1b9f88' }
               }}
             >
               Save Template

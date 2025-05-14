@@ -1,0 +1,33 @@
+/* -------- src/styles/_tokens.css ---------- */
+:root {
+  /* ========== Colours ========== */
+  --color-primary-500:#1890FF;
+  --color-primary-600:#2563eb;
+  --color-accent-500: #22c197;
+  --color-warning-500:#ffc55f;
+  --color-danger-500: #ff6aa8;
+
+  --color-bg-sidebar:#ffffff;
+  --color-bg-card:   #ffffff;
+  --color-border-card:#e6e6e6;
+  --color-text-heading:#262626;
+  --color-text-body:   #8C8C8C;
+
+  /* ========== Typography ========== */
+  --ff-base:"Public Sans",sans-serif;
+  --fs-12:0.75rem;    /* 12px */
+  --fs-14:0.875rem;   /* 14px */
+  --fs-16:1rem;       /* 16px */
+  --fs-18:1.125rem;   /* 18px */
+  --fw-400:400;
+  --fw-600:600;
+  --fw-700:700;
+
+  /* ========== Spacing & radius ========== */
+  --space-1:0.25rem;   /* 4px  */
+  --space-2:0.5rem;    /* 8px  */
+  --space-3:0.75rem;   /* 12px */
+  --space-4:1rem;      /* 16px */
+  --space-5:1.25rem;   /* 20px → card padding */
+  --radius-card:4px;   /* Figma says 4px */
+}

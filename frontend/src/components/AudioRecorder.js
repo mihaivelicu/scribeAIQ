@@ -10,10 +10,10 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import MicIcon from '@mui/icons-material/Mic';
-import CloseIcon from '@mui/icons-material/Close';
+
 
 // MUI components
-import { Menu, MenuItem, IconButton, Button, CircularProgress } from '@mui/material';
+import { Menu, MenuItem, Button, CircularProgress } from '@mui/material';
 
 // Our CSS
 import '../styles/AudioRecorder.css';
@@ -45,7 +45,7 @@ function AudioRecorder({ sessionData, fetchSessionDetails, onStatusUpdate }) {
   const [micMenuAnchor, setMicMenuAnchor] = useState(null);
 
   // Transcription modal (for mic select, if needed)
-  const [showTranscriptionModal, setShowTranscriptionModal] = useState(false);
+
 
   // ─────────────────────────────────────────────────────────────────────
   //  1) Enumerate & filter out “default” duplicates, and pick one to show as selected
@@ -255,31 +255,54 @@ function AudioRecorder({ sessionData, fetchSessionDetails, onStatusUpdate }) {
   // ─────────────────────────────────────────────────────────────────────
   //  6) Waveform drawing
   // ─────────────────────────────────────────────────────────────────────
-  const drawWaveform = () => {
-    if (!canvasRef.current || !analyserRef.current || !dataArrayRef.current) return;
+ /* ---------------------------------------------------------------
+ *  Waveform renderer – thin, square-ended, evenly-spaced “LED” bars
+ *  Tweak the four constants below to fine-tune the look.
+ * ------------------------------------------------------------- */
+const drawWaveform = () => {
+  if (!canvasRef.current || !analyserRef.current || !dataArrayRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const analyser = analyserRef.current;
-    const dataArr = dataArrayRef.current;
+  /* —--- Tweakables ---- */
+  const BAR_COUNT  = 28;      // total bars on screen
+  const BAR_WIDTH  = 1;       // each bar’s thickness  (px)
+  const BAR_GAP    = 3;       // empty space between bars (px)
+  const OPACITY    = 1;    // 0-1 – lower = more see-through
+  /* ——————————————————— */
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    analyser.getByteFrequencyData(dataArr);
+  const ctx       = canvasRef.current.getContext('2d');
+  const analyser  = analyserRef.current;
+  const dataArr   = dataArrayRef.current;
+  const { width, height } = canvasRef.current;
 
-    const barColor = (status === 'paused') ? 'red' : '#22C197';
-    ctx.fillStyle = barColor;
+  analyser.getByteFrequencyData(dataArr);
+  ctx.clearRect(0, 0, width, height);
 
-    const bufferLength = analyser.frequencyBinCount;
-    const barWidth = canvas.width / bufferLength;
+  ctx.fillStyle   = `rgba(255,255,255,${OPACITY})`;  // white@90%
+  ctx.lineCap     = 'butt';                          // square ends
 
-    for (let i = 0; i < bufferLength; i++) {
-      const barHeight = (dataArr[i] / 255) * canvas.height;
-      ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 1, barHeight);
-    }
+  const centerY   = height / 2;
+  const maxBarH   = height / 2;
+  const stepX     = BAR_WIDTH + BAR_GAP;             // distance between bar *starts*
+  const leftPad   = (width - (BAR_COUNT * BAR_WIDTH) - ((BAR_COUNT - 1) * BAR_GAP)) / 2;
 
-    animationFrameId.current = requestAnimationFrame(drawWaveform);
-  };
+  for (let i = 0; i < BAR_COUNT; i++) {
+    // pick a sample from FFT buffer
+    const idx     = Math.floor((i / BAR_COUNT) * dataArr.length);
+    const amp     = dataArr[idx] / 255;              // 0-1
+    const barH    = amp * maxBarH || 1;              // never 0
+    const x       = leftPad + i * stepX;
 
+    // draw a *filled rectangle* (square-ended) instead of a stroked line
+    ctx.fillRect(
+      x,
+      centerY - barH,
+      BAR_WIDTH,
+      barH * 2
+    );
+  }
+
+  animationFrameId.current = requestAnimationFrame(drawWaveform);
+};
   // ─────────────────────────────────────────────────────────────────────
   //  7) Timer helper
   // ─────────────────────────────────────────────────────────────────────
@@ -290,145 +313,125 @@ function AudioRecorder({ sessionData, fetchSessionDetails, onStatusUpdate }) {
     setTimerDisplay(`${mm}:${ss}`);
   };
 
-  // ─────────────────────────────────────────────────────────────────────
-  //  8) Render the main (Start/Stop/Resume/Transcribing/Done) button
-  // ─────────────────────────────────────────────────────────────────────
-
-  // Determine if transcription is complete
-  const transcriptionComplete = Boolean(sessionData?.transcription_text);
-
-  const renderMainButton = () => {
-    if (status === 'idle') {
+ /* ────────────────── 8) Render the primary button ────────────────── */
+const renderMainButton = () => {
+  switch (status) {
+    case 'idle':
       return (
-        <Button onClick={startRecording} variant="outlined" className="bubble-button">
+        <Button onClick={startRecording} className="bubble-button start-button">
           <FiberManualRecordIcon className="record-icon" />
-          <div className="bubble-label">START REC</div>
+          Start&nbsp;recording
         </Button>
       );
-    }
-    if (status === 'recording') {
+    case 'recording':
       return (
-        <Button onClick={stopRecording} variant="outlined" className="bubble-button">
+        <Button onClick={stopRecording} className="bubble-button stop-button">
           <StopIcon className="stop-icon" />
-          <div className="bubble-label">STOP REC</div>
+          Stop recording
         </Button>
       );
-    }
-    if (status === 'paused') {
+    case 'paused':
       return (
-        <Button onClick={resumeRecording} variant="outlined" className="bubble-button">
-          <PlayCircleIcon style={{ color: 'green' }} />
-          <div className="bubble-label">RESUME</div>
+        <Button onClick={stopRecording} className="bubble-button stopsave-button">
+          <StopIcon className="stop-icon" />
+          Stop&nbsp;&&nbsp;save
         </Button>
       );
-    }
-    if (status === 'transcribing') {
+    case 'transcribing':
       return (
-        <Button variant="outlined" disabled className="bubble-button">
-          <CircularProgress size={24} />
-          <div className="bubble-label">Transcribing</div>
+        <Button disabled className="bubble-button">
+          <CircularProgress size={22} />
+          Transcribing
         </Button>
       );
-    }
-    // 'done'
-    return (
-      <Button variant="outlined" disabled className="bubble-button">
-        <CheckCircleIcon className="done-icon" />
-        <div className="bubble-label">COMPLETE</div>
-      </Button>
-    );
-  };
-
+    default: /* done */
+      return (
+        <Button disabled className="bubble-button">
+          <CheckCircleIcon className="done-icon" />
+          Complete
+        </Button>
+      );
+  }
+};
   // ─────────────────────────────────────────────────────────────────────
   //  9) Conditional buttons for pause and mic select
   // ─────────────────────────────────────────────────────────────────────
-  const showPauseButton = (status === 'recording');
-  const showTranscriptionButton = (
-    status === 'done' && sessionData?.transcription_text
-  );
 
-  // ─────────────────────────────────────────────────────────────────────
-  //  10) Render
-  // ─────────────────────────────────────────────────────────────────────
+
+ /* ───────────────────────── 10) Render ───────────────────────── */
   return (
-    <div className="audio-recorder-wrapper">
-      {/* Row 1 */}
-      <div className="audio-recorder-row1">
-        <div className="main-button-slot">
-          {renderMainButton()}
-        </div>
+    <div className="audio-recorder-card">
 
-        {showPauseButton && (
-          <div className="pause-button-slot">
-            <IconButton onClick={pauseRecording}>
-              <PauseIcon className="audio-icon pause-button-icon" />
-            </IconButton>
-          </div>
+      {/* ROW-1  (two-column span + right strip) */}
+      <div className="main-action">{renderMainButton()}</div>
+
+      <div className="timer-waveform">
+        {!sessionData?.transcription_text && (
+          <span className={`timer-display ${status==='paused' ? 'paused':''}`}>
+            {timerDisplay}
+          </span>
         )}
-        <div className='rec-col1'>
-          {/* Timer is shown only when transcription is NOT complete */}
-          {!transcriptionComplete && (
-            <div className={`timer-display ${status === 'paused' ? 'paused' : ''}`}>
-              {timerDisplay}
-            </div>
-          )}
-          <div className="mic-select-container">
-            <Button
-              variant="outlined"
-              className={`mic-select-button ${status === 'done' ? 'done' : ''}`}
-              onClick={(e) => setMicMenuAnchor(e.currentTarget)}
-              disabled={status === 'recording' || status === 'paused' || status === 'transcribing' || transcriptionComplete}
-            >
-              <MicIcon style={{ color: transcriptionComplete ? 'gray' : (status === 'done' ? 'gray' : 'inherit') }} />
-              <KeyboardArrowDownIcon />
-            </Button>
-            <Menu
-              anchorEl={micMenuAnchor}
-              open={Boolean(micMenuAnchor)}
-              onClose={() => setMicMenuAnchor(null)}
-              PaperProps={{ style: { maxHeight: 300, minWidth: 200, fontSize: '0.85rem' } }}
-            >
-              {audioDevices.map((device) => (
-                <MenuItem
-                  key={device.deviceId}
-                  onClick={() => {
-                    setSelectedDeviceId(device.deviceId);
-                    setMicMenuAnchor(null);
-                  }}
-                  sx={{
-                    backgroundColor:
-                      device.deviceId === selectedDeviceId ? '#e8f4fc' : 'transparent',
-                    '&:hover': {
-                      backgroundColor:
-                        device.deviceId === selectedDeviceId ? '#d0e8f8' : '#f5f5f5',
-                    },
-                  }}
-                >
-                  {device.label || `Mic (${device.deviceId.slice(0, 4)})`}
-                  {device.deviceId === selectedDeviceId && (
-                    <CheckCircleIcon style={{ marginLeft: 'auto', color: '#22C197' }} />
-                  )}
-                </MenuItem>
-              ))}
-            </Menu>
-          </div>
-        </div>
-
-        <div className='rec-col2'>
-          <div className='waveform-container'>
-            {/* Waveform is shown when idle, recording, or paused */}
-            {(status === 'recording' || status === 'paused' || status === 'idle') && (
-              <canvas
-                ref={canvasRef}
-                className="waveform-canvas"
-                width={50}
-                height={25}
-              />
-            )}
-          </div>
-        </div>
-        
+        {(status!=='done' && status!=='transcribing') && (
+          <canvas
+            ref={canvasRef}
+            className="waveform-canvas"
+            width={80}
+            height={30}
+          />
+        )}
+        {/* mic selector always lives here */}
+        <Button
+          variant="text"
+          className="mic-select-button"
+          onClick={(e)=>setMicMenuAnchor(e.currentTarget)}
+          disabled={status === 'transcribing'}
+        >
+          <MicIcon className='mic-icon'/><KeyboardArrowDownIcon className='mic-icon'/>
+        </Button>
       </div>
+
+      {/* ROW-2  (three cells) */}
+      <div className="pause-cell">
+        {status==='recording' && (
+          <Button onClick={pauseRecording} className="secondary-btn pause-btn" startIcon={<PauseIcon/>}>
+            Pause
+          </Button>
+        )}
+        {status==='paused' && (
+          <Button onClick={resumeRecording} className="secondary-btn resume-btn" startIcon={<PlayCircleIcon/>}>
+            Resume
+          </Button>
+        )}
+      </div>
+
+      <div className="cancel-cell">
+        {(status==='recording'||status==='paused') && (
+          <Button onClick={stopRecording} className="secondary-btn">
+            Cancel
+          </Button>
+        )}
+      </div>
+
+      <div className="mic-cell">{/* empty – occupied by selector above */}</div>
+
+      {/* mic menu (unchanged) */}
+      <Menu
+        anchorEl={micMenuAnchor}
+        open={Boolean(micMenuAnchor)}
+        onClose={()=>setMicMenuAnchor(null)}
+        PaperProps={{ style:{ maxHeight:300,minWidth:200,fontSize:'0.85rem'} }}
+      >
+        {audioDevices.map((d)=>(
+          <MenuItem
+            key={d.deviceId}
+            selected={d.deviceId===selectedDeviceId}
+            onClick={()=>{
+              setSelectedDeviceId(d.deviceId);setMicMenuAnchor(null);}}
+          >
+            {d.label||`Mic (${d.deviceId.slice(0,4)})`}
+          </MenuItem>
+        ))}
+      </Menu>
     </div>
   );
 }

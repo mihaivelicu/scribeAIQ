@@ -1,141 +1,162 @@
-// src/components/Sidebar.js
+// ─── src/components/Sidebar.js ───────────────────────────────────
 import React, { useState, useEffect } from 'react';
 import {
   Button,
-  Card,
-  CardContent,
-  Checkbox,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteIcon      from '@mui/icons-material/Delete';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import axios           from 'axios';
+
 import '../styles/Sidebar.css';
-import axios from 'axios';
 import { deleteSession } from '../api';
-import SessionCard from './SessionCard';
+import SessionCard      from './SessionCard';
+import AudioRecorder    from './AudioRecorder';
 
 function Sidebar({
   sessions,
   selectedSessionId,
   onSessionSelect,
   onSessionsChange,
-  fetchAllSessions
+  fetchAllSessions,
+  onSessionUpdate,
+  selectedSession,
+  fetchSessionDetails,
+  onCreateSession
 }) {
   const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedIds,  setSelectedIds]    = useState([]);
+  const [confirmOpen,  setConfirmOpen]    = useState(false); // NEW
 
-  // If no sessions are selected, exit selection mode automatically
+  /* ───────────────────────── helpers ───────────────────────── */
+  const refreshList = async () => await fetchAllSessions();
+
+  /* auto-exit selection mode if array becomes empty */
   useEffect(() => {
-    if (selectedIds.length === 0) {
-      setSelectionMode(false);
-    }
+    if (selectedIds.length === 0) setSelectionMode(false);
   }, [selectedIds]);
 
-  // CREATE SESSION
+  /* ─── CREATE SESSION (unchanged) ─── */
   const handleCreateSession = async () => {
     try {
-      // 1) create
-      const response = await axios.post('/api/sessions', {
-        session_title: 'Untitled session'
-      });
-      const newSession = response.data;
+      const res   = await axios.post('/api/sessions', { session_title:'Untitled session' });
+      const list  = await refreshList();
+      const found = list.find(s => s.session_id === res.data.session_id);
+      onSessionSelect(found || res.data);
+    } catch (err) { console.error(err); }
+  };
 
-      // 2) re-fetch
-      const updatedList = await fetchAllSessions();
-
-      // 3) find newly created in updated list
-      const found = updatedList.find(s => s.session_id === newSession.session_id);
-
-      // 4) select it => triggers "handleSessionSelect(found)" in App.js
-      onSessionSelect(found || newSession);
-    } catch (err) {
-      console.error('Error creating session:', err);
+  /* ─── CHECKBOX TOGGLE ─── */
+  const handleCheckboxChange = (sid) => {
+    if (!selectionMode) { setSelectionMode(true); setSelectedIds([sid]); }
+    else {
+      setSelectedIds(prev =>
+        prev.includes(sid) ? prev.filter(id => id!==sid)
+                           : [...prev, sid]);
     }
   };
 
-  // Toggles the checkbox for a single session
-  const handleCheckboxChange = (sessionId) => {
-    if (!selectionMode) {
-      setSelectionMode(true);
-      setSelectedIds([sessionId]);
-    } else {
-      setSelectedIds((prev) =>
-        prev.includes(sessionId)
-          ? prev.filter((id) => id !== sessionId)
-          : [...prev, sessionId]
-      );
-    }
-  };
-
-  // "Select All" or "Unselect All" in one function
+  /* ─── SELECT / UNSELECT ALL ─── */
+  const allSelected          = selectedIds.length === sessions.length && sessions.length>0;
+  const selectAllButtonLabel = allSelected ? 'Unselect All' : 'Select All';
   const handleSelectAllToggle = () => {
-    if (selectedIds.length === sessions.length) {
-      // Already all selected -> unselect all
-      setSelectedIds([]);
-    } else {
-      // Not all selected -> select all
-      const allIds = sessions.map((s) => s.session_id);
-      setSelectedIds(allIds);
-    }
+    if (allSelected) setSelectedIds([]);
+    else setSelectedIds(sessions.map(s => s.session_id));
   };
 
-  // DELETE SELECTED
-  const handleDeleteSelected = async () => {
+  /* ─── DELETE CONFIRMATION ─── */
+  const openConfirm  = () => setConfirmOpen(true);
+  const closeConfirm = () => setConfirmOpen(false);
+
+  const handleConfirmDelete = async () => {
     try {
-      for (const id of selectedIds) {
-        await deleteSession(id);
-      }
-      setSelectionMode(false);
-      setSelectedIds([]);
-
-      // re-fetch the list so the sidebar is up-to-date
-      await fetchAllSessions();
-
-      // If you want to unselect the detail if the open session was deleted,
-      // you can do that here.
-    } catch (err) {
-      console.error('Error deleting sessions:', err);
-    }
+      for (const id of selectedIds) await deleteSession(id);
+      setSelectedIds([]);                       // reset UI
+      await refreshList();                      // refresh sidebar
+      closeConfirm();
+    } catch (err) { console.error('Error deleting sessions:', err); }
   };
 
-  // Determine the button label based on whether all sessions are selected
-  const allSelected = selectedIds.length === sessions.length && sessions.length > 0;
-  const selectAllButtonLabel = allSelected ? "Unselect All" : "Select All";
-
+  /* ───────────────────────── render ───────────────────────── */
   return (
     <div className="sidebar">
-      <Button
-        className="create-session-btn"
-        variant="contained"
-        color="primgreen"
-        onClick={handleCreateSession}
-      >
-        <span className="create-button-text">
-        Create Session
-        </span>
-      </Button>
 
-      <div className={`selection-toolbar ${selectionMode ? '' : 'hidden'}`}>
-        <Button className='select-button' variant="outlined" onClick={handleSelectAllToggle}>
-          {selectAllButtonLabel}
-        </Button>
-        <IconButton color="seconred" onClick={handleDeleteSelected}>
-          <DeleteIcon />
-        </IconButton>
+
+      <div className="recorder-wrapper">
+        {selectedSession && 
+         !selectedSession.audio_file_path && 
+         !selectedSession.transcription_text && (
+          <AudioRecorder
+            sessionData={selectedSession}
+            fetchSessionDetails={fetchSessionDetails}
+          />
+        )}
+        {/* otherwise show nothing here, but keep the wrapper */}
       </div>
 
+      {/* ─── SCROLLABLE LIST ─── */}
       <div className="session-list">
-        {sessions.map((s) => (
+        {sessions.map(s => (
           <SessionCard
             key={s.session_id}
             session={s}
             isSelected={s.session_id === selectedSessionId}
             selectionMode={selectionMode}
             isChecked={selectedIds.includes(s.session_id)}
-            onSelect={onSessionSelect} // same function as before
+            onSelect={onSessionSelect}
             onCheckboxChange={handleCheckboxChange}
+            onSessionUpdate={onSessionUpdate}
           />
         ))}
       </div>
+
+      {/* ─── SELECTION TOOLBAR (overlays create bar) ─── */}
+      <div className={`selection-toolbar ${selectionMode ? '' : 'hidden'}`}>
+        <Button variant="text"
+                className="select-button"
+                onClick={handleSelectAllToggle}>
+          {selectAllButtonLabel}
+        </Button>
+        <IconButton className='trash'onClick={openConfirm}>
+          <DeleteIcon />
+        </IconButton>
+      </div>
+
+      {/* ─── BOTTOM CREATE BAR ─── */}
+      <div className="top-action-wrapper">
+        <div className="create-btn-wrapper">
+          <Button className="create-session-btn"
+                  variant="contained"
+                  sx={{ textTransform:'none' }}
+                  onClick={onCreateSession}>
+            <span className="create-button-text">Create session</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* ─── CONFIRM DELETE MODAL ─── */}
+      <Dialog open={confirmOpen} onClose={closeConfirm}>
+        <DialogTitle sx={{ display:'flex', alignItems:'center', gap:1 }}>
+          <WarningAmberIcon color="warning" />
+          Are you sure you want to delete?
+        </DialogTitle>
+        <DialogContent>
+          {selectedIds.length} session{selectedIds.length!==1 && 's'} will be removed permanently.
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={closeConfirm}>
+            No, cancel
+          </Button>
+          <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+            Yes, delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </div>
   );
 }

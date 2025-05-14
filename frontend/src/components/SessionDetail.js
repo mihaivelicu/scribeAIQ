@@ -1,122 +1,199 @@
-// src/components/SessionDetail.js
+// ─── src/components/SessionDetail.js ───────────────────────────
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import SessionTitle from './SessionTitle';
-import AudioRecorder from './AudioRecorder';
-import TemplateBar from './TemplateBar';
+import axios                         from 'axios';
+
+import InsertDriveFileOutlinedIcon   from '@mui/icons-material/InsertDriveFileOutlined';
+import NotesOutlinedIcon             from '@mui/icons-material/NotesOutlined';
+import GraphicEqIcon                 from '@mui/icons-material/GraphicEq';
+
+import TemplateBar    from './TemplateBar';
 import Interpretations from './Interpretations';
-import TemplateModal from './TemplateModal';
+
 import '../styles/SessionDetail.css';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
 
-function SessionDetail({ sessionData, onSessionUpdate, fetchSessionDetails }) {
+function SessionDetail({ sessionData, fetchSessionDetails, onCreateSession }) {
+  /* ------------------------------------------------------------ */
+  /*  Local state                                                 */
+  /* ------------------------------------------------------------ */
   const [interpretations, setInterpretations] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [showTranscriptionModal, setShowTranscriptionModal] = useState(false);
+  const [templates,       setTemplates]       = useState([]);     // ← NEW
+  const [activeTab,       setActiveTab]       = useState('summary');
 
-  // Load interpretations whenever the session ID changes.
+  /* ------------------------------------------------------------ */
+  /*  Helpers                                                     */
+  /* ------------------------------------------------------------ */
+  const refreshInterpretations = async (sid) => {
+    if (!sid) { setInterpretations([]); return; }
+    try {
+      const res = await axios.get(`/api/interpretations?session_id=${sid}`);
+      setInterpretations(res.data);
+    } catch (err) { console.error(err); setInterpretations([]); }
+  };
+
+  const refreshTemplates = async () => {                          // ← NEW
+    try {
+      const res = await axios.get('/api/templates');
+      setTemplates(res.data);
+    } catch (err) { console.error('Error fetching templates:', err); }
+  };
+
+  /* ------------------------------------------------------------ */
+  /*  Effects                                                     */
+  /* ------------------------------------------------------------ */
+  /* reset tab & reload notes whenever session changes */
+  
   useEffect(() => {
-    if (sessionData?.session_id) {
-      const loadInterpretations = async () => {
-        try {
-          const res = await axios.get(`/api/interpretations?session_id=${sessionData.session_id}`);
-          setInterpretations(res.data);
-        } catch (err) {
-          console.error("Error loading interpretations:", err);
-          setInterpretations([]);
-        }
-      };
-      loadInterpretations();
-    } else {
-      setInterpretations([]);
-    }
+    setActiveTab('summary');
+    refreshInterpretations(sessionData?.session_id);
   }, [sessionData?.session_id]);
 
-  // Load templates on mount.
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        const res = await axios.get('/api/templates');
-        setTemplates(res.data);
-      } catch (err) {
-        console.error("Error loading templates:", err);
-        setTemplates([]);
-      }
-    };
-    fetchTemplates();
-  }, []);
+  /* get template list once on mount                               */
+  useEffect(() => { refreshTemplates(); }, []);
 
-  // Handle generating a new interpretation.
+  /* ------------------------------------------------------------ */
+  /*  After WRITE-NOTE callback                                   */
+  /* ------------------------------------------------------------ */
   const handleGenerateInterpretation = async (templateId) => {
-    if (!sessionData.transcription_text) {
-      alert("No transcription available yet.");
-      return;
-    }
+    if (!sessionData?.session_id) return;
     try {
-      const res = await axios.post('/api/interpretations', {
+      await axios.post('/api/interpretations', {
         session_id: sessionData.session_id,
         template_id: templateId,
       });
-      // Prepend the new interpretation to the list.
-      setInterpretations((prev) => [res.data, ...prev]);
-    } catch (err) {
-      console.error("Error generating interpretation:", err);
-    }
+      await refreshInterpretations(sessionData.session_id);
+      await refreshTemplates();                                   // ← NEW
+      fetchSessionDetails?.(sessionData.session_id);
+    } catch (err) { console.error(err); }
   };
 
-  if (!sessionData?.session_id) {
-    return <p>No session selected.</p>;
-  }
-
-  return (
-    <div className="session-detail">
-      <div className="recdiv">
-        <AudioRecorder
-          sessionData={sessionData}
-          fetchSessionDetails={fetchSessionDetails}
-        />
-      </div>
-
-      <div className="session-row row-title">
-        <SessionTitle
-          sessionData={sessionData}
-          onSessionUpdate={onSessionUpdate}
-          fetchSessionDetails={fetchSessionDetails}
-          onShowTranscript={() => setShowTranscriptionModal(true)}
-        />
-      </div>
-
-      <div className="templatediv">
-        <TemplateBar
-          sessionData={sessionData}
-          onGenerateInterpretation={handleGenerateInterpretation}
-        />
-      </div>
-
-      <div className="session-row row-interp">
-        <Interpretations interpretations={interpretations} templates={templates} />
-      </div>
-
-      {/* Transcription Modal */}
-      {showTranscriptionModal && (
-        <div
-          className="transcription-modal-overlay"
-          onClick={() => setShowTranscriptionModal(false)}
-        >
-          <div
-            className="transcription-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <IconButton className="close-button" onClick={() => setShowTranscriptionModal(false)}>
-              <CloseIcon />
-            </IconButton>
-            <h3>Transcription</h3>
-            <pre className="modal-pre">{sessionData?.transcription_text}</pre>
+  /* ------------------------------------------------------------ */
+  /*  Early-return branches                                       */
+  /* ------------------------------------------------------------ */
+  if (!sessionData) {
+    return (
+      <div className="session-detail">
+        <div className="card_container">
+          <div className="placeholder-card">
+            <p className="card-title">Start a new session</p>
+            <p className="card-description">
+              You don’t have any session open yet.
+            </p>
+            <button className="primary-btn" onClick={onCreateSession}>
+              Create a new session
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  const hasTranscript = Boolean(sessionData.transcription_text);
+  const hasNotes      = interpretations.length > 0;
+
+  if (!hasTranscript) {
+    return (
+      <div className="session-detail">
+        <div className="card_container">
+          <div className="placeholder-card">
+            <p className="card-title">No recording yet</p>
+            <p className="card-description">
+              This session has no audio.<br/>
+              Use the recorder in the sidebar first.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------------------------------------------ */
+  /*  Tab-button component                                        */
+  /* ------------------------------------------------------------ */
+  const TabButton = ({ id, icon:Icon, label }) => (
+    <button
+      className={`tab-button ${activeTab===id ? 'selected' : ''}`}
+      onClick={()=>setActiveTab(id)}
+    >
+      <span className="tab-button-wrapper">
+        <Icon fontSize="small"/>
+        <span className="tab-label">{label}</span>
+      </span>
+    </button>
+  );
+
+  /* ------------------------------------------------------------ */
+  /*  Main render                                                 */
+  /* ------------------------------------------------------------ */
+  return (
+    <div className="sd-container">
+
+      {/* ─── TOP BAR ─── */}
+      <div className="above-bar">
+
+        <div className="tab-btns">
+          <TabButton id="summary"    icon={InsertDriveFileOutlinedIcon} label="Summary" />
+          <TabButton id="letter"     icon={NotesOutlinedIcon}           label="Letter"  />
+          <TabButton id="transcript" icon={GraphicEqIcon}              label="Transcript" />
+        </div>
+
+        <div className="tpl-cont">
+          {(activeTab==='summary' || !hasNotes) && (
+            <TemplateBar
+              sessionData={sessionData}
+              onGenerateInterpretation={handleGenerateInterpretation}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* ─── MAIN BOX ─── */}
+      <div className="session-detail">
+
+        {/* Summary tab */}
+        {activeTab==='summary' && (
+          hasNotes ? (
+            <div className="interp_container">
+              <Interpretations
+                interpretations={interpretations}
+                templates={templates}          /* ← now delivered */
+              />
+            </div>
+          ) : (
+            <div className="card_container">
+              <div className="placeholder-card">
+                <p className="card-title">Now generate a note</p>
+                <p className="card-description">
+                  Select a template from the dropdown above<br/>
+                  and write this session&#39;s first note.
+                </p>
+              </div>
+            </div>
+          )
+        )}
+
+        {/* Transcript tab */}
+        {activeTab==='transcript' && (
+          <pre style={{
+            padding:'2rem',
+            width:'100%', height:'100%',
+            overflowY:'auto',
+            fontFamily:'inherit', fontSize:'14px', lineHeight:'22px',
+            whiteSpace:'pre-wrap', textAlign:'left'
+          }}>
+            {sessionData.transcription_text}
+          </pre>
+        )}
+
+        {/* Letter tab */}
+        {activeTab==='letter' && (
+          <div className="card_container">
+            <div className="placeholder-card">
+              <p className="card-title">Letter view</p>
+              <p className="card-description">Coming soon…</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

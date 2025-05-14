@@ -9,26 +9,124 @@
     --interp-caption-padding: 2px 6px;
     --interp-caption-border-radius: 4px;
     --interp-copy-font-size: 0.8rem;
-  }
+}
   
-  .interpretations-container {
-    width: var(--interp-container-width);
-    margin-top: 3rem;
-  }
+.interpretations-container {
+  flex: 1;                       /* let it grow to available height      */
+  display: flex;                 /* so children can fill it vertically   */
+  flex-direction: column;
+  max-height: 100%;              /* bounded by the Session-detail box    */
+  max-width: 100%;
+  flex: 1 1 auto;                 /* take the remaining height         */
+  overflow-y: auto; 
+}
+
+.interpretation-card {
+  border-radius: 4px !important; 
+  display: flex;
+  flex-direction: column;   
+  overflow-y: auto;           
+}
+
+.interpretation-content {
+  flex: 1 1 auto;                 /* take the remaining height         */
+  overflow-y: auto;  
   
-  .interpretation-card {
-    margin-top: var(--interp-card-margin-top);
-  }
+
+}
+.interp-text {
+  color: #000 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+
+
+}
+
   
-  .interpretation-caption {
-    color: var(--interp-caption-color);
-    background-color: var(--interp-caption-bg);
-    padding: var(--interp-caption-padding);
-    border-radius: var(--interp-caption-border-radius);
-  }
-  
-  .interpretation-copy-button {
-    text-transform: none;
-    font-size: var(--interp-copy-font-size);
-  }
-  
+.interpretation-caption {
+  color: var(--interp-caption-color);
+  background-color: var(--interp-caption-bg);
+  padding: var(--interp-caption-padding);
+  border-radius: var(--interp-caption-border-radius);
+}
+
+.interpretation-copy-button {
+  text-transform: none !important;
+  font-size: 12px !important;
+  border-radius: 4px !important;
+  border: 1px solid #F0F0F0 !important;
+}
+
+
+
+.pill-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px !important; /* space between pills */
+  position: relative; 
+
+}
+
+.MuiTabs-list {
+  gap: 10px !important; /* space between pills */
+}
+/* ------------------------------------------------------------ */
+/*  General pill appearance                                     */
+/* ------------------------------------------------------------ */
+.pill-tab{
+
+  padding: 8px !important;          
+  height: 38px !important;
+  border-radius: 4px !important;
+  border: 1px solid #F0F0F0 !important;
+  background-color: #FFFFFF !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+  text-transform: none !important;
+  color: #262626 !important;
+
+  transition: all .2s !important;
+  cursor: pointer !important;                     /* optional: keep pointer */
+}
+
+/* ------------------------------------------------------------ */
+/*  Hover state                                                 */
+/* ------------------------------------------------------------ */
+.pill-tab:hover{
+  background: #f5f7fa !important;
+}
+
+/* ------------------------------------------------------------ */
+/*  Selected state (MUI adds .Mui-selected automatically)       */
+/* ------------------------------------------------------------ */
+.pill-tab.Mui-selected{
+  color: #F8FCFF;
+  background-color: #F8FCFF !important;
+  border-color: #1890FF; 
+}
+
+.MuiTabScrollButton-root{
+  width: 20px !important;
+}
+
+/* feedback pill */
+.fb-prompt{
+  margin-top: 8px;          /* little gap under the card */
+  display:flex;
+  align-items:center;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+  padding:6px 12px;
+  background:#FFFFFF;
+  border:1px solid #F0F0F0;
+  border-radius:4px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  /* removed: position / right / bottom */
+}

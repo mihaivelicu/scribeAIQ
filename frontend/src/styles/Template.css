@@ -25,33 +25,39 @@
     color: #fff !important;
 }
 
-.select-bar {
-    width: 100%;
-    height: 2rem;
-}
 
 /* Outer container that holds everything in a single row. */
 .template-row-outer {
-    width: 25rem;
     display: flex;
     flex-direction: column; 
+    margin-left: 24px;
 }
 
 /* Inner row for the Select and the Button side by side. */
 .template-row-inner {
     display: flex;
     flex-direction: row;
-    align-items: stretch;
-    width: 100%;
+    align-items: center;
+    font-family: 'Public Sans', sans-serif !important;
+    gap: 4px;
 }
 
 /* The select bar fills the row minus the button width. */
 .select-bar {
+    min-width: 200px !important;
+    height: 32px !important;
+    padding: 6px 14px !important;
+    border-radius: 4px !important;
     flex: 1;
+    font-size: 12px !important;
+    line-height: 22px !important;  
+    font-weight: 400 !important;
+
 }
 
 .MuiSelect-select {
     font-size: var(--template-font-size) !important;
+    padding: 0 !important;
 }
 
 
@@ -64,3 +70,91 @@
   /* Adjust margin so it aligns nicely */
   margin-right: 0.3rem;
 }
+
+.create-new-template {
+    display: flex;
+    align-items: center;
+    font-size: 12px !important;
+    border-bottom: var(--color-text-body) solid 1px !important;
+    background-color: #fff !important;
+    padding-left: 38px !important;
+    
+}
+.create-new-template:hover {
+    background-color: #f1f1f1 !important;
+}
+
+.tpl-modal-paper {
+    border-radius: 4px !important;
+}
+.tpl-label {
+    margin-top: 30px !important;
+    border-radius: 4px !important;
+
+
+}
+.tpl-mod-btn {
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+    text-transform: none !important;
+}
+
+.tpl-save {
+    background-color: #1890FF !important;
+    color:#fff !important;
+}
+.tpl-save:hover {
+    background-color: #0782f6 !important;
+}
+
+.tpl-mod-head {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 24px !important;
+    color: var(--color-text-heading) !important;
+    padding: 14px 0 !important;
+    border-bottom: #d1d1d1 solid 1px !important;
+}
+
+.tpl-mod-btns {
+    padding-top: 8px !important;
+    padding-bottom: 24px !important;
+    border-top: #d1d1d1 solid 1px !important;
+    margin-top: 20px !important;
+}
+
+/* Let the auto-sizing textarea inherit Public Sans */
+textarea {
+    font-family: "Public Sans", sans-serif;
+  }
+  
+/* Remove default outline when TextareaAutosize is focused */
+textarea:focus-visible { outline: none; }
+
+/* 4-px corners for every outlined TextField inside the modal */
+.tpl-modal-paper .MuiOutlinedInput-notchedOutline{
+    border-radius:4px !important;
+  }
+
+ .write-note-btn{
+    color:#fff;
+    background-color: #F8FCFF !important;
+    font-size: 14px !important;
+    height: 32px !important;
+    border-radius: 4px !important;
+    text-transform: none !important;
+    font-weight: 700 !important;
+}
+
+.write-note-btn:hover {
+    background-color: #1890FF  !important;
+    color:#fff !important;
+}
+
+.write-note-btn:disabled {
+    background-color: #f3f3f3 !important;
+    color:#848484 !important;
+}
+

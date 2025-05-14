@@ -1,67 +1,56 @@
 /* src/styles/Sidebar.css */
-.sidebar {
-  width: 15rem;
-  background: #F4F6F8;
-  border-right: 1px solid #ccc;
-  height: 100vh;
-  overflow-y: auto;
-  position: relative;
-}
+
 .create-button-text {
   color: #fff !important;
-  font-family: 'Roboto', sans-serif;
-  font-weight: 600;
-  font-size: 0.8rem;
+  font-weight: 700 !important;
 
 }
 
-.create-session-btn {
-  width: 100%;
-  height: 3.5rem;
-  margin-top: 3rem !important;
-  margin-bottom: 2.5rem !important;
-  background-color: #22C197;
-  color: #fff !important;
-  font-weight: bold;
-}
 
-/* Hover background color */
-.session-card.hovered {
-  background-color: rgba(255, 197, 95, 0.4);
-}
+
 
 /* Selected (currently open) background color */
+
+.session-card.hovered{
+  background: #F8FCFF !important;
+}
 .session-card.currently-open {
-  background-color: rgba(255, 197, 95, 0.8);
+  background-color: #e9f4fe !important;
 }
 
-/* For dark text, you can tweak to a lighter color:
-.session-card.currently-open {
-  background-color: rgba(0, 150, 0, 0.1);
-}
-*/
+
 .select-button {
   height: 2rem;
+  text-transform: none !important;
 }
 
-/* Reserve a fixed space for the selection toolbar */
-.selection-toolbar {
+
+/* ─── SELECTION TOOLBAR overlays the create-bar ─────────────── */
+.selection-toolbar{
+  position: absolute;      /* float within .sidebar */
+  bottom: 95px;           /* 120 px = height of .top-action-wrapper */
+  left: 0;
+  width: 100%;
+  z-index: 3;              /* above the create-bar (z-index 2) */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 3rem; /* fixed height */
-  margin-bottom: 0rem;
-  padding: 0px 10px;
+  padding: 0 24px;
+  background: transparent; /* see-through */
 }
 
-/* When toolbar is inactive, hide its content but keep its space */
-.selection-toolbar.hidden {
-  visibility: hidden;
+.trash {
+  color:#fe6167 !important;
+
 }
 
-.session-list {
-  margin-top: 0; /* no extra margin since toolbar space is reserved */
+  /* When toolbar is inactive, hide its content but keep its space */
+.selection-toolbar.hidden{
+  visibility:hidden;
 }
+
+
+
 
 .cardcontent-sesh {
   padding: 0px !important;
@@ -70,7 +59,6 @@
 }
 
 .session-card {
-  margin-bottom: 2px;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
   position: relative;
@@ -115,19 +103,9 @@
   display: flex;
   flex-direction: column;
   margin-left: 30px; /* reserve space for checkbox */
+  margin-right: auto;
 }
 
-.session-name {
-  font-size: 0.9rem;
-  font-family: 'Lora', serif;
-  font-weight: 600;
-}
-
-.session-date {
-  font-size: 0.6rem;
-  color: rgba(0, 0, 0, 0.5);
-  margin-top: 0;
-}
 
 @keyframes fadeInLeft {
   from {
@@ -144,3 +122,172 @@
   animation: fadeInLeft 0.5s ease-out;
 }
 
+
+
+
+
+
+
+
+
+/* Text */
+.session-name {
+  display: flex;
+  font-family: "Public Sans", sans-serif !important;
+  font-size: 16px !important;
+  line-height: 28px !important;
+  font-weight: var(--fw-700) !important;
+  color: var( --color-text-heading) !important;
+  margin-bottom: 2px !important;
+  padding-right: auto;
+  margin-right: auto;
+  cursor: text;
+}
+
+.session-date {
+  font-family: "Public Sans", sans-serif !important;
+  color: var(--color-text-body) !important;
+  font-size: 14px !important;
+  line-height: 22px !important;
+  font-weight: var(--fw-400) !important;
+}
+
+
+/* -------- src/styles/Sidebar.css ---------- */
+
+/*  Sidebar itself  */
+.sidebar{                    
+  background:var(--color-bg-sidebar);
+  width:338px;
+  height:100vh;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;    
+  position: relative;
+}
+
+
+
+
+/* ========== Card ========== */
+.session-card{
+  width:100%;                       /* fills sidebar ( = 290 px ) */
+  background:var(--color-bg-card);
+  border:1px solid var(--color-border-card);
+  border-radius:var(--radius-card) !important;
+  padding-top:var(--space-4) !important;           
+  padding-bottom: var(--space-4) !important;
+  margin-bottom:6px;   
+  cursor:pointer;
+  transition:background 0.15s ease;
+  position:relative;
+  box-sizing:border-box;
+}
+
+/* Hover / active colours  */
+
+
+
+/* inner flex wrapper (so title & date stay stacked) */
+.card-content-inner{display:flex;flex-direction:column;}
+
+/*  Checkbox (appears on hover / selection)  */
+.session-checkbox{
+  position:absolute;left:var(--space-2);top:50%;
+  transform:translateY(-50%);
+  opacity:0;transition:opacity .15s ease;
+}
+.session-card.hovered .session-checkbox,
+.session-card.selection-mode .session-checkbox{opacity:1;}
+
+
+
+/* ----------  LAYOUT  ---------- */
+
+
+
+/* ----------  BUTTON  ---------- */
+
+.create-session-btn {
+  width: 100%;
+  border-radius: var(--radius-card) !important;
+  background: var(--color-primary-500) !important;
+  font: var(--fw-600) var(--fs-18)/1 var(--ff-base);
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-button-text {             /* optional: slightly bigger text */
+  font-size: var(--fs-14) !important;
+  line-height: 22px !important;
+}
+/* remove the old top-margin rules */
+
+.top-action-wrapper {
+  position:sticky;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 24px;
+  height: 140px;
+  width: 100%;
+  background:var(--color-bg-sidebar);
+  border-top:1px solid var(--color-border-card);
+  z-index:2;
+}
+.create-btn-wrapper {
+  width: 100%;
+  display: flex;
+  justify-self: center !important;
+  align-self: center !important;
+}
+
+.recorder-wrapper {
+  position:sticky;
+  padding: 0 24px;
+  display: flex;
+  justify-items: center;
+  align-items: center;
+  height: 120px;
+  width: 100%;
+  bottom:0; 
+  background:var(--color-bg-sidebar);
+  z-index:2;
+
+}
+
+
+
+
+/* ===== LIST ===== */
+.session-list{
+  flex:1;                       /* takes the remaining height */
+  overflow-y:auto;              /* ONLY the list scrolls */
+  padding:0 24px;            /* same side padding as cards */
+}
+
+
+/* ===== BUTTON ===== */
+.create-session-btn{
+  width:100%;
+  padding:12px 0 !important;               /* taller like cards */
+  border-radius:var(--radius-card);
+  background:var(--color-primary-500)!important;
+  font:var(--fw-600) var(--fs-16)/1 var(--ff-base);
+  color:#fff!important;
+}
+
+.create-button-text{
+  font-size:var(--fs-14);
+  font-weight:var(--fw-700);
+  line-height:22px;
+}
+
+.MuiInput-underline:before,
+.MuiInput-underline:after{
+  left:0; right:auto;          /* shrink underline to text width */
+}

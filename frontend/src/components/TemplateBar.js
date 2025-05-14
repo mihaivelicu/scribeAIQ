@@ -6,7 +6,6 @@ import {
   MenuItem,
 } from '@mui/material';
 
-import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined';
 import StarIcon from '@mui/icons-material/Star';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -26,6 +25,7 @@ function TemplateBar({ sessionData, onGenerateInterpretation }) {
 
   useEffect(() => {
     fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchTemplates = async () => {
@@ -123,17 +123,6 @@ function TemplateBar({ sessionData, onGenerateInterpretation }) {
   const transcriptExists = Boolean(sessionData?.transcription_text);
   const templateSelected = Boolean(selectedTemplateId);
   
-  let buttonBg;
-  let buttonHoverBg = undefined;
-  
-  if (!transcriptExists) {
-    buttonBg = "#ccc"; // Inactive gray.
-  } else if (transcriptExists && !templateSelected) {
-    buttonBg = "#ccc"; // Still inactive gray.
-  } else if (transcriptExists && templateSelected) {
-    buttonBg = "#22C197"; // Active primary green.
-    buttonHoverBg = 'hsl(164, 100%, 44%)'; // More saturated on hover.
-  }
   
   const isActive = transcriptExists && templateSelected;
 
@@ -148,27 +137,22 @@ function TemplateBar({ sessionData, onGenerateInterpretation }) {
           open={menuOpen}
           onOpen={() => setMenuOpen(true)}
           onClose={() => setMenuOpen(false)}
+          MenuProps={{
+            anchorOrigin:   { vertical: 'bottom', horizontal: 'right' },   // stick to left
+            transformOrigin:{ vertical: 'top',    horizontal: 'right'  },  // grow from left
+          }}
           renderValue={(selected) => {
             if (!selected) {
-              return <span style={{ color: '#aaa' }}>Select a note template</span>;
+              return <span>Select a template</span>;
             }
             const found = templates.find((t) => t.template_id === selected);
-            return found ? found.template_name : 'Select a note template';
+            return found ? found.template_name : 'Select a template';
           }}
         >
           <MenuItem
+            className='create-new-template'
             value="create"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontStyle: 'italic',
-              borderBottom: '1px solid #ccc',
-              backgroundColor: '#f5f5f5',
-              fontWeight: 'bold',
-            }}
           >
-            <AddOutlinedIcon fontSize="small" />
             Create New Template
           </MenuItem>
 
@@ -182,18 +166,19 @@ function TemplateBar({ sessionData, onGenerateInterpretation }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  position: 'relative'
+                  position: 'relative',
+                  gap: '2rem',
                 }}
               >
                 {/* Left container: star icon and template name */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', }}>
                   <StarComp
                     onClick={(e) => handleFavoriteClick(t, e)}
                     style={{
                       cursor: 'pointer',
                       color: (t.favorite || false) ? 'gold' : 'inherit',
                       transition: 'color 0.2s ease-in-out',
-                      fontSize: 'var(--template-icon-size, 1rem)'
+                      fontSize: 'var(--template-icon-size, 1rem)',
                     }}
                     onMouseEnter={(e) => {
                       if (!(t.favorite || false)) e.currentTarget.style.color = 'gold';
@@ -239,25 +224,12 @@ function TemplateBar({ sessionData, onGenerateInterpretation }) {
         </Select>
 
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={handleWriteNote}
           disabled={!isActive}
-          sx={{
-            backgroundColor: buttonBg + ' !important',
-            color: '#fff',
-            fontSize: '0.8rem',
-            height: '2rem',
-            marginLeft: '0.5rem',
-            fontWeight: 'bold',
-            '&:hover': isActive && buttonHoverBg ? { backgroundColor: buttonHoverBg + ' !important' } : {},
-            '&.Mui-disabled': {
-              backgroundColor: buttonBg + ' !important',
-              opacity: 1,
-              color: '#fff',
-            },
-          }}
+          className="write-note-btn"
         >
-          WRITE NOTE
+          Write note
         </Button>
       </div>
 

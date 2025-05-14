@@ -1,24 +1,17 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import Sidebar from './components/Sidebar';
 import SessionDetail from './components/SessionDetail';
 import './styles/App.css';
+import './styles/_tokens.css';
+import theme from './theme';
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#22C197' },
-    primgreen: { main: '#22C197' },
-    secondary: { main: '#FFC55F' },
-    seconred: { main: '#FF6AA8' }
-  },
-  typography: {
-    fontFamily: ['Roboto', 'sans-serif'].join(',')
-  }
-});
+
+
 
 function App() {
   const [sessions, setSessions] = useState([]);
@@ -44,7 +37,6 @@ function App() {
   async function fetchSessionById(sessionId) {
     try {
       const res = await axios.get(`/api/sessions/${sessionId}`);
-      console.log("PARENT: Updated session data:", res.data);
       setSelectedSession(res.data);
       // Also update the sessions array so the sidebar re-renders:
       setSessions(prev =>
@@ -53,6 +45,21 @@ function App() {
     } catch (err) {
       console.error('Error fetching single session:', err);
     }
+  }
+
+  // Create & immediately open a brand-new session  ───────────
+  async function handleCreateSession() {
+    try {
+      const res = await axios.post('/api/sessions', {
+        session_title: 'Untitled session'
+      });
+      const newSession = res.data;
+
+      // refresh list, then select the brand-new one
+      const updated = await fetchAllSessions();
+      const found   = updated.find(s => s.session_id === newSession.session_id);
+      handleSessionSelect(found || newSession);
+    } catch (err) { console.error('Error creating session:', err); }
   }
 
   // When a session is selected in the Sidebar.
@@ -83,20 +90,19 @@ function App() {
           onSessionSelect={handleSessionSelect}
           onSessionsChange={setSessions}
           fetchAllSessions={fetchAllSessions}
+          onSessionUpdate={handleSessionUpdate}
+          selectedSession={selectedSession}
+          fetchSessionDetails={fetchSessionById}
+          onCreateSession={handleCreateSession} 
         />
 
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {selectedSession ? (
-            <SessionDetail
-              sessionData={selectedSession}
-              onSessionUpdate={handleSessionUpdate}
-              fetchSessionDetails={fetchSessionById}
-            />
-          ) : (
-            <p style={{ flex: 1, textAlign: 'center', marginTop: '4rem' }}>
-              Select a session from the sidebar.
-            </p>
-          )}
+        <div className="container-sesh" style={{ flex: 1, overflowY: 'auto' }}>
+          <SessionDetail
+            sessionData        ={selectedSession}
+            onSessionUpdate    ={handleSessionUpdate}
+            fetchSessionDetails={fetchSessionById}
+            onCreateSession    ={handleCreateSession} 
+          />
         </div>
       </div>
     </ThemeProvider>

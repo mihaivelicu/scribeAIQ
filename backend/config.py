@@ -1,9 +1,20 @@
-# config.py
+# backend/config.py
+import os
+from pathlib import Path
+from dotenv import load_dotenv, find_dotenv   # pip install python-dotenv
 
-# Replace these with your actual credentials.
-DATABASE_URI = "postgresql://admin:vladWeb4pp@localhost/scrib"
-OPENAI_API_KEY = "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"
+# 1) Load .env if it exists anywhere up the tree -------------------
+load_dotenv(find_dotenv())   # no error if the file doesn't exist
 
-# Where to store uploaded audio files:
-AUDIO_UPLOAD_FOLDER = "/var/www/scrib/audio_uploads"
+# 2) Helper --------------------------------------------------------
+def must_get(var: str) -> str:
+    value = os.getenv(var)
+    if not value:
+        raise RuntimeError(f"Environment variable '{var}' is required.")
+    return value
 
+# 3) Config values -------------------------------------------------
+DATABASE_URI         = must_get("DATABASE_URI")
+OPENAI_API_KEY       = must_get("OPENAI_API_KEY")
+AUDIO_UPLOAD_FOLDER  = os.getenv("AUDIO_UPLOAD_FOLDER",
+                                 "/var/www/scrib/audio_uploads")

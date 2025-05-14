@@ -9,21 +9,14 @@
   
   /* Global Styles */
   body {
-    font-family: 'Roboto', sans-serif;
     background-color: #f5f5f5;
     color: #333;
-    line-height: 1.6;
   }
   
-  /* Headings use Lora for a more elegant look */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Lora', serif;
-    margin-bottom: 0.5rem;
-  }
   
   /* Links */
   a {
-    color: #3F6FE4; /* Primary color */
+    color: #1890FF; /* Primary color */
     text-decoration: none;
   }
   
@@ -33,19 +26,18 @@
   
   /* Buttons */
   button {
-    font-family: 'Roboto', sans-serif;
     cursor: pointer;
   }
   
   /* Material UI overrides can be added here if needed */
   .MuiButton-containedPrimary {
-    background-color: #3F6FE4 !important;
+    background-color: #1890FF !important;
     color: #fff !important;
   }
   
   /* Example: primary and secondary utility classes */
   .primary-bg {
-    background-color: #3F6FE4;
+    background-color: #1890FF;
     color: #fff;
   }
   
@@ -65,7 +57,7 @@
   
   /* Override Material UI global typography if needed */
   .MuiTypography-root {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Public Sans', sans-serif;
   }
   
   /* Add some spacing utilities */

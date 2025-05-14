@@ -1,17 +1,35 @@
 /* src/styles/SessionDetail.css */
 
 .session-detail {
-  position: relative;         /* So .row-title can be absolutely placed */
+       /* So .row-title can be absolutely placed */
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: #fff;
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-  padding-right: 3rem;
-  padding-left: 4.5rem;
+
 }
 
+.session-detail{
+  position: relative;
+  height: 100%;
+  width: 100%;
+  padding: 0;                 /* wipe old paddings – we’ll work inside */
+  background: #FAFAFA;       /* light grey */
+  border: 1px solid #d0d3d8;
+  border-radius: 4px;
+  display: flex;              /* centre the placeholder cards */
+  align-items: flex-start;
+  justify-content: flex-start;
+  align-content: flex-start;
+  overflow: hidden;           /* children stay clipped to radius */
+}
+
+.card_container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;                /* wipe old paddings – we’ll work inside */
+}
 /* Common row style */
 .session-row {
   width: 100%;
@@ -83,7 +101,180 @@
   height: 3rem !important; /* forced 2rem height */
 }
 
-.interp-text {
-  font-size: 0.75rem !important;
+.interp_container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+}
+
+
+.placeholder-card{
+  font-family: 'Public Sans', sans-serif !important;
+  max-width: 90%;
+  background:#fff;
+  border-radius:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding: 2rem;
+  text-align:flex-start;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  justify-items: space-evenly;
+  align-items: space-evenly;
+  align-content: space-evenly;
+}
+.placeholder-card h2{margin-top:0;}
+.primary-btn{
+  margin-top:1rem;
+  padding:8px 18px;
+  border:none;
+  background-color: #1890FF;
+  border-radius:4px;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+.primary-btn:hover{background:#0782f6;;}
+
+
+.card-title{
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+} 
+.card-description{
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 400;
+  color: var(--color-text-body);
+}
+
+.transcript-button{
+  color:#555;
+  background:#fff;
+  border-radius:50%;
+}
+.transcript-button:hover{ background:#f1f1f1; }
+
+.placeholder-card h3{ margin-top:0; }   /* optional tidy-up */
+
+.sd-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100% !important;
+  height: 100%;
+}
+
+.above-bar{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-items: space-between;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+
+.transcript-btn-text {
+  font-family: 'Public Sans', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;  
+  line-height: 22px !important;
+  color:#000 !important;
+}
+
+/* ─── TRANSCRIPT “TAB” STYLE ───────────────────────────── */
+
+/* default state */
+.transcript-button{
+  /* remove the round-button look */
+  padding: 0;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none;
+}
+
+/* icon + label inline */
+.transcript-button-wrapper{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding-bottom:4px;          /* space for underline */
+  border-bottom:2px solid transparent;   /* invisible by default */
+}
+
+/* hover colour (grey underline, no pill) */
+.transcript-button:hover .transcript-button-wrapper{
+  border-bottom-color:#d0d3d8; /* light grey */
+}
+
+/* active / selected state – add the blue underline & colour */
+.transcript-button.selected .transcript-button-wrapper{
+  color:#1890FF;
+  border-bottom-color:#1890FF;
+}
+
+/* ─── TAB BUTTONS ───────────────────────────────────────────── */
+.tab-button{
+  background:transparent;
+  border:none;
+  cursor:pointer;
+}
+.tab-button-wrapper{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding-bottom:4px;                  /* room for underline */
+  color:#000;
+  font-family:'Public Sans',sans-serif;
+  font-size:18px;
+  line-height:28px;
+  font-weight:400;
+  transition:color .25s;
+}
+.tab-button-wrapper::after{
+  content:'';
+  position:absolute;
+  left:0; bottom:0;
+  height:2px; width:100%;
+  background:#1890FF;
+  transform:scaleX(0);
+  transform-origin:left;
+  transition:transform .25s ease;
+}
+.tab-button:hover .tab-button-wrapper::after{
+  transform:scaleX(1);                 /* blue underline on hover */
+}
+.tab-button:hover .tab-button-wrapper{ color:#000; }
+
+.tab-button.selected .tab-button-wrapper{
+  color:#1890FF;                       /* blue text when active */
+}
+.tab-button.selected .tab-button-wrapper::after{
+  transform:scaleX(1);                 /* underline stays visible */
+}
+
+/* keep icon size aligned with text */
+.tab-label{ 
+  display:inline-block;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+ }
+
+/* ensure top bar elements stay aligned */
+.above-bar{ gap:32px; }
+
+.tab-btns {
+
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 24px !important;
 }
 

@@ -1,0 +1,59 @@
+.submsgfeedback{
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+    color: #8C8C8C !important;
+    margin-top: 25px !important;
+    padding: 0 20px !important;
+    padding-bottom: 20px !important;
+    border-bottom: 1px solid #F0F0F0 !important;
+}
+
+.title-feedback{
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 24px !important;
+    color: #262626 !important;
+    border-bottom: 1px solid #F0F0F0 !important;
+}
+
+.feedback-text{
+    display: flex;
+    border-radius: 4px !important;
+}
+
+.MuiPaper-root {
+    border-radius: 4px !important;
+}
+.MuiOutlinedInput-notchedOutline {
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+}
+
+.MuiButton-root {
+    border-radius: 4px !important;
+    text-transform: none !important;
+}
+
+.send-feedback-btn {
+    background-color: #1890FF !important;
+    color:#fff !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+    text-transform: none !important;
+}
+
+.MuiInputBase-input::placeholder {
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 22px !important;
+    color: #c5c5c5 !important;
+    opacity: 1 !important;
+}
+
+.x-icon {
+    font-size: 14px !important;
+}

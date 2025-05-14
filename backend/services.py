@@ -16,18 +16,18 @@ def generate_short_title(transcription_text):
     The response must be a JSON with a single key "title".
     """
 
-    prompt = f"""You are in the backend of a modeical scribe webapp. This is the session transcription: 
+    prompt = f"""You are in the backend of a medical scribe webapp. This is the session transcription: 
     {transcription_text}
 
     Generate a short title for this session that is no longer than 27 characters. 
     Words must fit inside the 27 characters, not cutting words at the end. 
     Do not unnecessarily capitalise the first letter of every word, unless its the first word in the title, or the word has to have capital letters.
     Output your answer strictly in JSON format with a single key "title", for example:
-    {{"title": "Your title"}}"""
-    
+    {{"title": "Your title"}}. Return only pure JSON, no other text, no other symbols. It needs to be correctly read as json by a python script."""
+    print('tra---', transcription_text)
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a concise assistant."},
                 {"role": "user", "content": prompt}
@@ -36,10 +36,14 @@ def generate_short_title(transcription_text):
             max_tokens=30,
         )
         # Extract the message content
+        print('res---', response)
         message_content = response.choices[0].message['content']
         # Parse the response as JSON
+        print('mes---', message_content)
         result = json.loads(message_content)
+        print('res2---', result)
         title = result.get("title", "").strip()[:22]
+        print('title---', title)
         return title
     except Exception as e:
         print("Error generating short title:", e)
@@ -81,7 +85,7 @@ def generate_interpretation(session_id: int, template_id: int) -> Interpretation
     
     # Call OpenAI ChatCompletion
     response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=[{"role": "user", "content": prompt_text}]
     )
     generated = response.choices[0].message.content.strip()
