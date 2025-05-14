@@ -32,6 +32,12 @@ function Sidebar({
   const [selectedIds,  setSelectedIds]    = useState([]);
   const [confirmOpen,  setConfirmOpen]    = useState(false); // NEW
 
+  // Decide if recorder should replace the Create-session button
+  const showRecorder =
+  selectedSession &&
+  !selectedSession.audio_file_path &&
+  !selectedSession.transcription_text;
+
   /* ───────────────────────── helpers ───────────────────────── */
   const refreshList = async () => await fetchAllSessions();
 
@@ -85,17 +91,18 @@ function Sidebar({
   return (
     <div className="sidebar">
 
+    
 
-      <div className="recorder-wrapper">
-        {selectedSession && 
-         !selectedSession.audio_file_path && 
-         !selectedSession.transcription_text && (
-          <AudioRecorder
-            sessionData={selectedSession}
-            fetchSessionDetails={fetchSessionDetails}
-          />
-        )}
-        {/* otherwise show nothing here, but keep the wrapper */}
+      {/* ─── SELECTION TOOLBAR ─── */}
+      <div className={`selection-toolbar ${selectionMode ? '' : 'hidden'}`}>
+        <Button variant="text"
+                className="select-button"
+                onClick={handleSelectAllToggle}>
+          {selectAllButtonLabel}
+        </Button>
+        <IconButton className='trash'onClick={openConfirm}>
+          <DeleteIcon />
+        </IconButton>
       </div>
 
       {/* ─── SCROLLABLE LIST ─── */}
@@ -114,28 +121,27 @@ function Sidebar({
         ))}
       </div>
 
-      {/* ─── SELECTION TOOLBAR (overlays create bar) ─── */}
-      <div className={`selection-toolbar ${selectionMode ? '' : 'hidden'}`}>
-        <Button variant="text"
-                className="select-button"
-                onClick={handleSelectAllToggle}>
-          {selectAllButtonLabel}
-        </Button>
-        <IconButton className='trash'onClick={openConfirm}>
-          <DeleteIcon />
-        </IconButton>
-      </div>
+
 
       {/* ─── BOTTOM CREATE BAR ─── */}
       <div className="top-action-wrapper">
-        <div className="create-btn-wrapper">
-          <Button className="create-session-btn"
-                  variant="contained"
-                  sx={{ textTransform:'none' }}
-                  onClick={onCreateSession}>
-            <span className="create-button-text">Create session</span>
-          </Button>
-        </div>
+        {showRecorder ? (
+          <AudioRecorder
+            sessionData={selectedSession}
+            fetchSessionDetails={fetchSessionDetails}
+          />
+        ) : (
+          <div className="create-btn-wrapper">
+            <Button
+              className="create-session-btn"
+              variant="contained"
+              sx={{ textTransform: 'none' }}
+              onClick={onCreateSession}
+            >
+              <span className="create-button-text">Create session</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ─── CONFIRM DELETE MODAL ─── */}
@@ -151,7 +157,7 @@ function Sidebar({
           <Button variant="outlined" onClick={closeConfirm}>
             No, cancel
           </Button>
-          <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+          <Button variant="contained" onClick={handleConfirmDelete}>
             Yes, delete
           </Button>
         </DialogActions>

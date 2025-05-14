@@ -14,6 +14,7 @@ class Session(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # Relationship to interpretations (with cascade deletion)
     interpretations = db.relationship('Interpretation', backref='session', cascade="all, delete-orphan")
+    transcription_expires_at = db.Column(db.DateTime, nullable=True)
 
 class Template(db.Model):
     __tablename__ = 'templates'

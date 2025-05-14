@@ -27,17 +27,20 @@
 
 /* ─── SELECTION TOOLBAR overlays the create-bar ─────────────── */
 .selection-toolbar{
-  position: absolute;      /* float within .sidebar */
-  bottom: 95px;           /* 120 px = height of .top-action-wrapper */
-  left: 0;
+  position: sticky;
+  top: 0;
+  height: 40px !important;
+  margin-bottom: 10px !important;
   width: 100%;
   z-index: 3;              /* above the create-bar (z-index 2) */
   display: flex;
   justify-content: space-between;
+  align-content: center;
   align-items: center;
-  padding: 0 24px;
+  padding: 40px 24px 0 24px !important;
   background: transparent; /* see-through */
 }
+
 
 .trash {
   color:#fe6167 !important;
@@ -104,6 +107,7 @@
   flex-direction: column;
   margin-left: 30px; /* reserve space for checkbox */
   margin-right: auto;
+  gap: 2px !important
 }
 
 
@@ -147,7 +151,7 @@
 .session-date {
   font-family: "Public Sans", sans-serif !important;
   color: var(--color-text-body) !important;
-  font-size: 14px !important;
+  font-size: 12px !important;
   line-height: 22px !important;
   font-weight: var(--fw-400) !important;
 }
@@ -233,7 +237,7 @@
   justify-content: center;
   align-items: center;
   padding: 0 24px;
-  height: 140px;
+  height: 120px;
   width: 100%;
   background:var(--color-bg-sidebar);
   border-top:1px solid var(--color-border-card);
@@ -242,8 +246,9 @@
 .create-btn-wrapper {
   width: 100%;
   display: flex;
-  justify-self: center !important;
-  align-self: center !important;
+  position: absolute;
+  bottom: 24px;
+  padding: inherit;
 }
 
 .recorder-wrapper {
@@ -267,7 +272,9 @@
 .session-list{
   flex:1;                       /* takes the remaining height */
   overflow-y:auto;              /* ONLY the list scrolls */
-  padding:0 24px;            /* same side padding as cards */
+  padding:0px 24px 0 24px;            /* same side padding as cards */
+  position: sticky;
+  top: 72px;
 }
 
 
@@ -290,4 +297,12 @@
 .MuiInput-underline:before,
 .MuiInput-underline:after{
   left:0; right:auto;          /* shrink underline to text width */
+}
+
+.session-expiry {
+  font-family: "Public Sans", sans-serif !important;
+  color: #8C8C8C !important;     
+  font-size: 12px !important;
+  line-height: 22px !important;
+  font-weight: 400 !important;
 }

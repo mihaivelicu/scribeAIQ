@@ -130,3 +130,11 @@
   box-shadow:0 2px 6px rgba(0,0,0,.08);
   /* removed: position / right / bottom */
 }
+
+/* spinner pill */
+.loading-pill {
+  min-width: 46px;                 /* match normal pill size */
+  border-radius: 16px;
+  background: var(--color-bg-card, #f5f5f5);
+}
+

@@ -1,3 +1,4 @@
+// src/components/SessionCard.js
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Card, CardContent, Checkbox, Typography, TextField
@@ -12,23 +13,21 @@ function SessionCard({
   isChecked,
   onSelect,
   onCheckboxChange,
-  onSessionUpdate           // <--- NEW
+  onSessionUpdate
 }) {
-  /* -------------------- UI state -------------------- */
-  const [hovered, setHovered]     = useState(false);
-  const [editing, setEditing]     = useState(false);
-  const [title,   setTitle]       = useState(session.session_title || 'Untitled session');
+  /* -------------------------------------------------- */
+  /*  Local UI state                                    */
+  /* -------------------------------------------------- */
+  const [hovered,  setHovered]  = useState(false);
+  const [editing,  setEditing]  = useState(false);
+  const [title,    setTitle]    = useState(session.session_title || 'Untitled session');
 
- 
+  /* fade-in when “Untitled session” gets renamed */
+  const [animate,  setAnimate]  = useState(false);
+  const prevTitleRef            = useRef(session.session_title);
 
-  /* --- fade-in animation when “Untitled session” gets renamed --- */
-  const [animate, setAnimate] = useState(false);
-  const prevTitleRef = useRef(session.session_title);
-   // Sync local title state whenever the parent passes in a new session_title
   useEffect(() => {
-    if (!editing) {
-      setTitle(session.session_title || 'Untitled session');
-    }
+    if (!editing) setTitle(session.session_title || 'Untitled session');
   }, [session.session_title, editing]);
 
   useEffect(() => {
@@ -43,39 +42,64 @@ function SessionCard({
     prevTitleRef.current = session.session_title;
   }, [session.session_title]);
 
+  /* -------------------------------------------------- */
+  /*  24-hour expiry countdown                           */
+  /* -------------------------------------------------- */
+  const [expiresDisplay, setExpiresDisplay] = useState(null);
 
+  useEffect(() => {
+    if (!session.transcription_expires_at) { setExpiresDisplay(null); return; }
 
+    /* force UTC by appending Z if missing */
+    const utcIso = session.transcription_expires_at.endsWith('Z')
+      ? session.transcription_expires_at
+      : session.transcription_expires_at + 'Z';
+
+    const target = new Date(utcIso).getTime();
+
+    const update = () => {
+      const ms = target - Date.now();
+      if (ms <= 0) { setExpiresDisplay('expired'); return; }
+      const h = Math.floor(ms / 3_600_000);
+      const m = Math.floor((ms % 3_600_000) / 60_000);
+      setExpiresDisplay(`${h}h ${m}m`);
+    };
+
+    update();                               // initial
+    const id = setInterval(update, 60_000); // every minute
+    return () => clearInterval(id);
+  }, [session.transcription_expires_at]);
 
   /* -------------------------------------------------- */
-  /*  SAVE to server on blur / Enter                    */
+  /*  Save title to server                              */
   /* -------------------------------------------------- */
   const saveTitle = async (raw) => {
     const newTitle = raw.trim() || 'Untitled session';
     if (newTitle === session.session_title) { setEditing(false); return; }
 
     try {
-      const res = await axios.put(`/api/sessions/${session.session_id}`, {
+      const res     = await axios.put(`/api/sessions/${session.session_id}`, {
         session_title: newTitle
       });
-      const updated = res.data;           // backend returns full row
-
-      // pass up to parent so sidebar + detail sync
-      onSessionUpdate?.(updated);
-
+      onSessionUpdate?.(res.data);
     } catch (err) {
       console.error('Error saving title:', err);
-      // re-insert the old title so user can try again
       setTitle(session.session_title);
     }
     setEditing(false);
   };
 
-  /* Build CSS class list exactly as before */
+  /* -------------------------------------------------- */
+  /*  Card CSS classes                                  */
+  /* -------------------------------------------------- */
   let cardClasses = 'session-card';
   if (selectionMode) cardClasses += ' selection-mode';
   if (isSelected)    cardClasses += ' currently-open';
   if (hovered)       cardClasses += ' hovered';
 
+  /* -------------------------------------------------- */
+  /*  Render                                            */
+  /* -------------------------------------------------- */
   return (
     <Card
       variant="outlined"
@@ -85,7 +109,7 @@ function SessionCard({
       onMouseLeave={() => setHovered(false)}
     >
       <CardContent className="cardcontent-sesh">
-        {/* Checkbox (unchanged) */}
+        {/* checkbox */}
         <div className="session-checkbox">
           <Checkbox
             checked={isChecked}
@@ -93,15 +117,26 @@ function SessionCard({
           />
         </div>
 
-        {/* Title + Date block */}
+        {/* content */}
         <div className="card-content-inner">
           <div className="sesh-container">
 
-            {/* ---------- TITLE / EDIT FIELD ---------- */}
+
+            {/* row-3  created-at */}
+            <Typography variant="body2" className="session-date">
+              {[
+                new Date(session.created_at).toLocaleTimeString(
+                  'en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                new Date(session.created_at).toLocaleDateString(
+                  'en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })
+              ].join(' • ')}
+            </Typography>
+
+            {/* row-2  title / editor */}
             {editing ? (
               <TextField
                 size="small"
-                variant="standard" 
+                variant="standard"
                 fullWidth
                 value={title}
                 autoFocus
@@ -116,23 +151,30 @@ function SessionCard({
             ) : (
               <Typography
                 variant="standard"
-                className={`session-name ${animate ? 'fade-in' : ''}`} 
-                onClick={e => {                      // start editing
+                className={`session-name ${animate ? 'fade-in' : ''}`}
+                onClick={e => {
                   e.stopPropagation();
-                  if (!selectionMode) setEditing(true);
+                  if (!selectionMode) {
+                    onSelect(session);
+                    setEditing(true);
+                  }
                 }}
               >
                 {title}
               </Typography>
             )}
 
-            {/* ---------- DATE ---------- */}
-            <Typography variant="body2" className="session-date">
-              {[
-                new Date(session.created_at).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', hour12:false }),
-                new Date(session.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'2-digit' })
-              ].join(' • ')}
-            </Typography>
+            {/* row-1  expiry */}
+            {expiresDisplay && (
+              <Typography variant="body2" className="session-expiry">
+                {expiresDisplay === 'expired'
+                  ? 'Expired'
+                  : `Expires in: ${expiresDisplay}`}
+              </Typography>
+            )}
+
+            
+
           </div>
         </div>
       </CardContent>

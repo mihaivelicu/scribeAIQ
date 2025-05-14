@@ -126,29 +126,29 @@
 
 .stopsave-button {
   text-transform: none !important;
-  background-color: #45eb4b !important;
+  background-color: #fe6167 !important;
   border-radius: 0px !important;
 }
 .stopsave-button:hover {
-  background-color: #36f53d !important;
+  background-color: #fc4b51 !important;
 }
 
 .start-button {
   text-transform: none !important;
-  background-color: #fe6167  !important;
+  background-color: #88ca61  !important;
   border-radius: 0px !important;
 }
 .start-button:hover {
-  background-color: #fc4b51 !important;
+  background-color: #78d840  !important;
 }
 
 .stop-button {
   text-transform: none !important;
-  background-color: #45eb4b !important;
+  background-color: #fe6167 !important;
   border-radius: 0px !important;
 }
 .stop-button:hover {
-  background-color: #36f53d !important;
+  background-color: #fc4b51 !important;
 }
 
 .record-icon {
@@ -228,6 +228,8 @@
   overflow:hidden;             
   background-color:var(--color-border-card) !important;
   font-family:var(--ff-base);
+  position: absolute;
+  bottom: 24px;
 }
 
 /* ----------  ROW-1  ---------- */

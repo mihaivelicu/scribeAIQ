@@ -33,7 +33,7 @@
 }
 
 .MuiButton-root {
-    border-radius: 4px !important;
+    border-radius: 4px;
     text-transform: none !important;
 }
 

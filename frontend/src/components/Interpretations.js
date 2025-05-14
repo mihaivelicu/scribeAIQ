@@ -1,64 +1,80 @@
 // ─── src/components/Interpretations.js ─────────────────────────
 import React, { useState } from 'react';
 import {
-  Tabs, Tab, Box, Card, CardContent,
-  Typography, Button, Fade
+  Box, Tabs, Tab, Card, CardContent, Typography,
+  Button, Fade, CircularProgress
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import '../styles/Interpretations.css';
 import FeedbackPrompt from './FeedbackPrompt';
 
-function Interpretations({ interpretations, templates = [] }) {
-  const [selectedTab,  setSelectedTab]  = useState(0);
-  const [copied, setCopied] = useState(false);
+function Interpretations({
+  interpretations,
+  templates = [],
+  isWriting = false,           /* NEW */
+}) {
+  const [selectedTab, setSelectedTab] = useState(0);
+  const [copied,      setCopied]      = useState(false);
 
-  /* sort newest → oldest */
+  /* newest → oldest */
   const sortedInterps = interpretations.slice().sort(
-    (a,b) => new Date(b.created_at) - new Date(a.created_at)
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
 
-  /* helper */
   const getTemplateName = (id) =>
     templates.find(t => t.template_id === id)?.template_name || 'Template Name';
 
-  /* tab change */
   const handleTabChange = (_, val) => setSelectedTab(val);
 
-  /* copy to clipboard */
   const handleCopy = () => {
     const text = sortedInterps[selectedTab]?.generated_text || '';
     navigator.clipboard.writeText(text)
-      .then(()=>{
+      .then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       })
-      .catch((err)=>console.error(err));
+      .catch(console.error);
   };
 
   return (
     <Box className="interpretations-container">
-      {/* ---- PILLED TABS ---- */}
-      <Tabs
-        value={selectedTab}
-        onChange={handleTabChange}
-        variant="scrollable"
-        scrollButtons="auto"
-        className='pill-tabs'
-        TabIndicatorProps={{ sx:{ display:'none' } }}    /* hide blue bar */
-      >
-        {sortedInterps.map((interp, idx) => (
-          <Tab
-            key={interp.interpretation_id}
-            label={getTemplateName(interp.template_id)}
-            className="pill-tab"
-          />
-        ))}
-      </Tabs>
+      {/* ---- PILLED TABS + SPINNER ---- */}
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {isWriting && (
+          <Box
+            className="pill-tab loading-pill"
+            sx={{
+              mr: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: 2,
+            }}
+          >
+            <CircularProgress size={14} />
+          </Box>
+        )}
+
+        <Tabs
+          value={selectedTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          className="pill-tabs"
+          TabIndicatorProps={{ sx: { display: 'none' } }}
+        >
+          {sortedInterps.map((interp, idx) => (
+            <Tab
+              key={interp.interpretation_id}
+              label={getTemplateName(interp.template_id)}
+              className="pill-tab"
+            />
+          ))}
+        </Tabs>
+      </Box>
 
       {/* ---- SELECTED INTERPRETATION ---- */}
       {sortedInterps.length > 0 && (
-        /* The Fragment keeps the Card and the prompt one-after-another
-          in normal document flow.                                   */
         <>
           <Card className="interpretation-card">
             <CardContent className="interpretation-content">
@@ -70,7 +86,6 @@ function Interpretations({ interpretations, templates = [] }) {
                   gap: 1
                 }}
               >
-                {/* ↖ the green badge */}
                 {copied && (
                   <Fade in={copied} timeout={{ enter: 300, exit: 900 }}>
                     <Box
@@ -107,7 +122,6 @@ function Interpretations({ interpretations, templates = [] }) {
             </CardContent>
           </Card>
 
-          {/* ➜ prompt now sits right underneath the card */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <FeedbackPrompt
               interpretationId={sortedInterps[selectedTab].interpretation_id}

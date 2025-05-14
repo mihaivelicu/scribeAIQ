@@ -40,7 +40,10 @@ def list_sessions():
         results.append({
             "session_id": s.session_id,
             "session_title": s.session_title,
-            "created_at": s.created_at.isoformat()
+            "created_at": s.created_at.isoformat(),
+            "transcription_expires_at": (
+                s.transcription_expires_at.isoformat() if s.transcription_expires_at else None
+            ),
         })
     return jsonify(results), 200
 
@@ -56,7 +59,8 @@ def get_session_details(session_id):
         "session_title": s.session_title,
         "audio_file_path": s.audio_file_path,
         "transcription_text": s.transcription_text,
-        "created_at": s.created_at.isoformat()
+        "created_at": s.created_at.isoformat(),
+        "transcription_expires_at": s.transcription_expires_at.isoformat() if s.transcription_expires_at else None
     }), 200
 
 @routes_blueprint.route("/sessions/<int:session_id>", methods=["PUT"])
@@ -333,9 +337,7 @@ def upload_chunk(session_id):
 @routes_blueprint.route("/sessions/<int:session_id>/merge-chunks", methods=["POST"])
 def merge_chunks(session_id):
     """
-    Takes all partial chunk files from /temp_chunks/session_<id>/,
-    merges them with ffmpeg in correct chronological order,
-    transcribes the final result, updates session audio_file_path.
+    Merge uploaded chunks, transcribe, then delete ALL audio files/folders.
     """
     s = Session.query.get(session_id)
     if not s:
@@ -345,69 +347,46 @@ def merge_chunks(session_id):
     if not os.path.exists(temp_dir):
         return jsonify({"error": "No partial chunks found"}), 400
 
-    # Gather all chunk MP3s
     chunks = [f for f in os.listdir(temp_dir) if f.endswith(".mp3")]
     if not chunks:
         return jsonify({"error": "No chunk files found"}), 400
 
-    # 1) Sort by file creation time so we get the chronological order
-    chunks.sort(key=lambda fname: os.path.getctime(os.path.join(temp_dir, fname)))
+    chunks.sort(key=lambda f: os.path.getctime(os.path.join(temp_dir, f)))
 
-    # 2) If there's only one chunk, no real merge needed; just rename
+    final_mp3 = os.path.join(config.AUDIO_UPLOAD_FOLDER, f"session_{session_id}_merged.mp3")
+
     if len(chunks) == 1:
-        single_chunk_path = os.path.join(temp_dir, chunks[0])
-        final_mp3_path = os.path.join(config.AUDIO_UPLOAD_FOLDER, f"session_{session_id}_merged.mp3")
-        try:
-            shutil.move(single_chunk_path, final_mp3_path)
-        except Exception as e:
-            return jsonify({"error": f"Error moving chunk: {str(e)}"}), 500
+        shutil.move(os.path.join(temp_dir, chunks[0]), final_mp3)
     else:
-        # 3) For multiple chunks, create a list.txt and run ffmpeg concat
-        list_path = os.path.join(temp_dir, "list.txt")
-        with open(list_path, "w") as f:
+        list_txt = os.path.join(temp_dir, "list.txt")
+        with open(list_txt, "w") as f:
             for c in chunks:
                 f.write(f"file '{os.path.join(temp_dir, c)}'\n")
+        subprocess.run([
+            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+            "-i", list_txt, "-c", "copy", final_mp3
+        ], check=True)
 
-        final_mp3_path = os.path.join(config.AUDIO_UPLOAD_FOLDER, f"session_{session_id}_merged.mp3")
-
-        merge_cmd = [
-            "ffmpeg", "-y",
-            "-f", "concat",
-            "-safe", "0",
-            "-i", list_path,
-            "-c", "copy",
-            final_mp3_path
-        ]
-        try:
-            subprocess.run(merge_cmd, check=True)
-        except Exception as e:
-            return jsonify({"error": f"Error merging chunks: {str(e)}"}), 500
-
-    # 4) Transcribe the merged MP3
+    # --- Transcribe & delete audio ---
     try:
-        transcribe_audio_file(final_mp3_path, s)
+        transcribe_audio_file(final_mp3, s)   # this removes final_mp3 itself
     except Exception as e:
-        return jsonify({"error": f"Error during transcription: {str(e)}"}), 500
+        return jsonify({"error": f"Transcription error: {e}"}), 500
 
-    # NEW: Auto-update title if still default and transcription is available.
+    # auto-title if still default
     if s.session_title.strip().lower() == "untitled session" and s.transcription_text:
-        from services import generate_short_title  # Import if not already imported
-        new_title = generate_short_title(s.transcription_text)
-        print(f"Auto-generated title: {new_title}")
-        s.session_title = new_title
+        from services import generate_short_title
+        s.session_title = generate_short_title(s.transcription_text)
         db.session.commit()
 
-    # 5) Update session
-    s.audio_file_path = "/audio/" + os.path.basename(final_mp3_path)
-    db.session.commit()
-
-    # 6) Optionally remove temp dir
+    # remove temp chunk directory
     try:
         shutil.rmtree(temp_dir)
     except Exception as e:
-        print(f"Warning: failed to remove temp dir {temp_dir}: {e}")
+        print(f"Warning: could not delete temp dir {temp_dir}: {e}")
 
-    return jsonify({"message": "Chunks merged & transcribed in correct order"}), 200
+    return jsonify({"message": "Chunks merged, transcribed, and audio deleted"}), 200
+
 
 @routes_blueprint.route("/templates/<int:template_id>", methods=["PUT"])
 def update_template(template_id):
